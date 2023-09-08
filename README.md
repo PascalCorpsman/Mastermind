@@ -2,7 +2,7 @@
 
 This repository implements the Mastermind board game with 4 or 6 colors (including an AI that can be used to get tipps, when solving).
 
-![preview.png]()
+![](preview.png)
 
 This repository holds a playable game and if you want. Download, compile and play the game. But that is not the reason why i created this repository ;).
 
