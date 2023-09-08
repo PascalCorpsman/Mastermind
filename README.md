@@ -11,3 +11,7 @@ I created this repository as i needed a "old" starting point of a working projec
 This repository will "log" by its commits the progress of hopefully improving the code base step by step. This will give you the ability to see how i improved the code.
 
 As starting point i read the book "Five Lines of Code" (ISBN-10: 3836292246, ISBN-13: 978-3836292245) written by Christian Clausen. I will practice the technices shown in this book and mix them with my intuition to hopefully in the end get a cristal clear easy to read codebase.
+
+## License
+
+See the license.md file located at https://github.com/PascalCorpsman/Software_Licenses/blob/main/license.md for details about the license.
