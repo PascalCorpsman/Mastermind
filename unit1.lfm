@@ -9,6 +9,7 @@ object Form1: TForm1
   Caption = 'Form1'
   ClientHeight = 549
   ClientWidth = 403
+  OnClose = FormClose
   OnCreate = FormCreate
   Position = poScreenCenter
   LCLVersion = '2.3.0.0'

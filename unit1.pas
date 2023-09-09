@@ -34,7 +34,7 @@ Interface
 
 Uses
   Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs, StdCtrls,
-  ExtCtrls;
+  ExtCtrls, umastermind;
 
 Type
 
@@ -69,12 +69,13 @@ Type
     Procedure Button7Click(Sender: TObject);
     Procedure Button8Click(Sender: TObject);
     Procedure Button9Click(Sender: TObject);
+    Procedure FormClose(Sender: TObject; Var CloseAction: TCloseAction);
     Procedure FormCreate(Sender: TObject);
     Procedure Shape1MouseUp(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
   private
     { private declarations }
-    SixColorGame: Boolean; // True, wenn mit 6 Farben zur Auswahl gespielt wird.
+    fMasterMind: TMasterMind;
     ColorsToGuess: TGuess; // Die zu eratenden Farben
     Boards: Array Of TGroupBox; // Die bisherigen Rateversuche
     Procedure FreeBoards; // Gibt alle Boards Frei
@@ -242,7 +243,7 @@ Begin
   im.Center := true;
   im.Picture.Assign(b);
   b.free;
-  If (s[1] <> '-') And (SixColorGame) Then Button5.Enabled := true;
+  If (s[1] <> '-') And (fMasterMind.SixColorGame) Then Button5.Enabled := true;
   result := (s[1] = 's') And (s[2] = 's') And (s[3] = 's') And (s[4] = 's');
 End;
 
@@ -331,7 +332,7 @@ End;
 Procedure TForm1.Button1Click(Sender: TObject);
 Begin
   // Starte Spiel mit 4 Farben
-  SixColorGame := false;
+  fMasterMind.SixColorGame := false;
   FreeBoards;
   HideAllColors;
   InitColors;
@@ -345,7 +346,7 @@ End;
 Procedure TForm1.Button2Click(Sender: TObject);
 Begin
   // Starte Spiel mit 6 Farben
-  SixColorGame := true;
+  fMasterMind.SixColorGame := true;
   FreeBoards;
   InitColors;
   ShowAllColors;
@@ -544,10 +545,16 @@ Begin
   showmessage('Todo');
 End;
 
+Procedure TForm1.FormClose(Sender: TObject; Var CloseAction: TCloseAction);
+Begin
+  fMasterMind.Free;
+End;
+
 Procedure TForm1.FormCreate(Sender: TObject);
 Begin
   caption := 'Mastermind ver 0.01 by Corpsman | www.Corpsman.de |';
   Randomize;
+  fMasterMind := TMasterMind.Create();
   Boards := Nil;
   button3.enabled := false;
   button5.enabled := false;
