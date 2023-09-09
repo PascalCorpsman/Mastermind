@@ -74,22 +74,15 @@ Type
   private
     { private declarations }
     fMasterMind: TMasterMind;
-    Procedure FreeBoards; // Gibt alle Boards Frei
+
     Procedure ShowAllColors; // Zeigt alle Vorschlagsfarben an
     Procedure HideAllColors; // Versteckt alle Vorschlagsfarben
     Procedure InitColors; // Initialisiert Colors und macht nur diejenigen Vorschlagsfarben sichtbar, welche verwendet wurden
-    Procedure MixColors; // Mischt Colors
     Procedure AddEmptyBoard; // Schiebt alle Boards um eins nach unten und erstellt ein neues leeres
     Function CreateBoardEvaluationAndEval: Boolean; // Erzeugt das Auswertungsbildchen in Board[0], true, wenn die Lösung gefunden wurde
     Procedure OnBoard0ShapeMouseUp(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer); // Callback zum entfernen einer Farbe aus Board[0]
 
-    (*
-     * Vergleicht ColorGuess und ColortMatch und gibt die "Übereinstimmungen"
-     * als Ergebniss eines "-ws" strings zurück.
-     *)
-    Function GetMatchString(Const ColorGuess, ColorMatch: TGuess): String;
-    Function BoardToGuess(Index: integer): TGuess;
   public
     { public declarations }
   End;
@@ -100,17 +93,6 @@ Var
 Implementation
 
 {$R *.lfm}
-
-Uses math;
-
-Operator = (a, b: tGuess): Boolean;
-Begin
-  result :=
-    (a[0].Brush.Color = b[0].Brush.Color) And
-    (a[1].Brush.Color = b[1].Brush.Color) And
-    (a[2].Brush.Color = b[2].Brush.Color) And
-    (a[3].Brush.Color = b[3].Brush.Color);
-End;
 
 { TForm1 }
 
@@ -124,8 +106,6 @@ Begin
 End;
 
 Procedure TForm1.InitColors;
-Const
-  Count = 4;
 Var
   k, j, i: Integer;
   b: boolean;
@@ -148,22 +128,6 @@ Begin
         fMasterMind.ColorsToGuess[i] := s;
         s.Visible := true;
       End;
-    End;
-  End;
-End;
-
-Procedure TForm1.MixColors;
-Var
-  i, j, k: integer;
-  tmp: TShape;
-Begin
-  For i := 0 To 100 Do Begin
-    j := random(length(fMasterMind.ColorsToGuess));
-    k := random(length(fMasterMind.ColorsToGuess));
-    If j <> k Then Begin
-      tmp := fMasterMind.ColorsToGuess[j];
-      fMasterMind.ColorsToGuess[j] := fMasterMind.ColorsToGuess[k];
-      fMasterMind.ColorsToGuess[k] := tmp;
     End;
   End;
 End;
@@ -250,72 +214,6 @@ Begin
   sender.free;
 End;
 
-Function TForm1.GetMatchString(Const ColorGuess, ColorMatch: TGuess): String;
-  Function cmp(a, b: Char): integer;
-  Const
-    gew = '-ws';
-  Var
-    p1, p2: integer;
-  Begin
-    p1 := pos(a, gew);
-    p2 := pos(b, gew);
-    result := p2 - p1;
-  End;
-Var
-  bs: Array[0..3] Of Char;
-  i, j: Integer;
-  t: Char;
-
-Begin
-  (*
-   * - = Kein Match
-   * w = Richtige Farbe aber Falsche Position
-   * s = Richtige Farbe auf Richtiger Position
-   *)
-  For i := 0 To 3 Do Begin
-    bs[i] := '-';
-    For j := 0 To 3 Do Begin
-      If ColorGuess[i].Brush.Color = ColorMatch[j].Brush.Color Then Begin
-        If i = j Then Begin
-          bs[i] := 's';
-        End
-        Else Begin
-          bs[i] := 'w';
-        End;
-      End;
-    End;
-  End;
-  // Die Antwort ist Ermittelt nun wird sie Sortiert, weils besser aussieht, und weil es die zwischenergebnisse Verschleiert
-  For i := 3 Downto 1 Do Begin
-    For j := 1 To i Do Begin
-      If cmp(bs[j], bs[j - 1]) > 0 Then Begin
-        t := bs[j - 1];
-        bs[j - 1] := bs[j];
-        bs[j] := t;
-      End;
-    End;
-  End;
-  result := bs[0] + bs[1] + bs[2] + bs[3];
-End;
-
-Function TForm1.BoardToGuess(Index: integer): TGuess;
-Begin
-  result[0] := fMasterMind.Boards[Index].Components[0] As TShape;
-  result[1] := fMasterMind.Boards[Index].Components[1] As TShape;
-  result[2] := fMasterMind.Boards[Index].Components[2] As TShape;
-  result[3] := fMasterMind.Boards[Index].Components[3] As TShape;
-End;
-
-Procedure TForm1.FreeBoards;
-Var
-  i: Integer;
-Begin
-  For i := 0 To high(fMasterMind.Boards) Do Begin
-    fMasterMind.Boards[i].free;
-  End;
-  setlength(fMasterMind.boards, 0);
-End;
-
 Procedure TForm1.ShowAllColors;
 Var
   i: Integer; // Zeigen aber wieder alle an, so das der User nicht weiß welche beiden wir nicht nutzen
@@ -329,10 +227,10 @@ Procedure TForm1.Button1Click(Sender: TObject);
 Begin
   // Starte Spiel mit 4 Farben
   fMasterMind.SixColorGame := false;
-  FreeBoards;
+  fMasterMind.FreeBoards;
   HideAllColors;
   InitColors;
-  MixColors;
+  fMasterMind.MixColors;
   AddEmptyBoard;
   button3.enabled := true; // Check Freischalten
   button5.enabled := false; // Hide unused sperren
@@ -343,10 +241,10 @@ Procedure TForm1.Button2Click(Sender: TObject);
 Begin
   // Starte Spiel mit 6 Farben
   fMasterMind.SixColorGame := true;
-  FreeBoards;
+  fMasterMind.FreeBoards;
   InitColors;
   ShowAllColors;
-  MixColors;
+  fMasterMind.MixColors;
   AddEmptyBoard;
   button3.enabled := true; // Check Freischalten
   button5.enabled := false; // Hide unused sperren
@@ -499,7 +397,7 @@ Begin
     KeepTrying := false; // Annemen dass wir eine neue passende Permutation gefunden haben
     For i := 1 To high(fMasterMind.Boards) Do Begin
       // 2.1 Der neue Vorschlag muss unterschiedlich zu allen bisher gefundenen sein
-      GuessFromGuessboard := BoardToGuess(i);
+      GuessFromGuessboard := fMasterMind.BoardToGuess(i);
       If NewGuess = GuessFromGuessboard Then Begin
         KeepTrying := true;
         break;
