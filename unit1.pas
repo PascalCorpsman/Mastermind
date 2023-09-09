@@ -38,8 +38,6 @@ Uses
 
 Type
 
-  tGuess = Array[0..3] Of TShape;
-
   { TForm1 }
 
   TForm1 = Class(TForm)
@@ -76,8 +74,6 @@ Type
   private
     { private declarations }
     fMasterMind: TMasterMind;
-    ColorsToGuess: TGuess; // Die zu eratenden Farben
-    Boards: Array Of TGroupBox; // Die bisherigen Rateversuche
     Procedure FreeBoards; // Gibt alle Boards Frei
     Procedure ShowAllColors; // Zeigt alle Vorschlagsfarben an
     Procedure HideAllColors; // Versteckt alle Vorschlagsfarben
@@ -135,21 +131,21 @@ Var
   b: boolean;
   s: TShape;
 Begin
-  For i := 0 To high(ColorsToGuess) Do Begin
-    ColorsToGuess[i] := Nil;
+  For i := 0 To high(fMasterMind.ColorsToGuess) Do Begin
+    fMasterMind.ColorsToGuess[i] := Nil;
     b := true;
     While b Do Begin
       j := random(6) + 1;
       s := TShape(FindComponent('Shape' + inttostr(j)));
       b := false;
       For k := 0 To i - 1 Do Begin
-        If ColorsToGuess[k] = s Then Begin
+        If fMasterMind.ColorsToGuess[k] = s Then Begin
           b := true;
           break;
         End;
       End;
       If Not b Then Begin
-        ColorsToGuess[i] := s;
+        fMasterMind.ColorsToGuess[i] := s;
         s.Visible := true;
       End;
     End;
@@ -162,12 +158,12 @@ Var
   tmp: TShape;
 Begin
   For i := 0 To 100 Do Begin
-    j := random(length(ColorsToGuess));
-    k := random(length(ColorsToGuess));
+    j := random(length(fMasterMind.ColorsToGuess));
+    k := random(length(fMasterMind.ColorsToGuess));
     If j <> k Then Begin
-      tmp := ColorsToGuess[j];
-      ColorsToGuess[j] := ColorsToGuess[k];
-      ColorsToGuess[k] := tmp;
+      tmp := fMasterMind.ColorsToGuess[j];
+      fMasterMind.ColorsToGuess[j] := fMasterMind.ColorsToGuess[k];
+      fMasterMind.ColorsToGuess[k] := tmp;
     End;
   End;
 End;
@@ -177,26 +173,26 @@ Var
   i, j: integer;
   s: TShape;
 Begin
-  setlength(Boards, high(Boards) + 2); // + 1 Board
+  setlength(fMasterMind.Boards, high(fMasterMind.Boards) + 2); // + 1 Board
   // Shift alle Boards eins nach hinten
-  For i := high(Boards) Downto 1 Do Begin
-    boards[i] := Boards[i - 1];
+  For i := high(fMasterMind.Boards) Downto 1 Do Begin
+    fMasterMind.boards[i] := fMasterMind.Boards[i - 1];
   End;
   // Neues Board initialisieren
-  boards[0] := TGroupBox.Create(self);
-  boards[0].Parent := self;
-  boards[0].Left := GroupBox1.Left;
-  boards[0].Width := length(ColorsToGuess) * (Shape1.Width + 10) + Shape1.Width + 20 { Bereich für die Lösung};
-  boards[0].Height := GroupBox1.Height;
-  boards[0].Name := 'Guessboard' + inttostr(length(Boards));
-  boards[0].Caption := ' Guessboard ' + inttostr(length(Boards)) + ' ';
-  For i := 0 To high(Boards) Do Begin
+  fMasterMind.boards[0] := TGroupBox.Create(self);
+  fMasterMind.boards[0].Parent := self;
+  fMasterMind.boards[0].Left := GroupBox1.Left;
+  fMasterMind.boards[0].Width := length(fMasterMind.ColorsToGuess) * (Shape1.Width + 10) + Shape1.Width + 20 { Bereich für die Lösung};
+  fMasterMind.boards[0].Height := GroupBox1.Height;
+  fMasterMind.boards[0].Name := 'Guessboard' + inttostr(length(fMasterMind.Boards));
+  fMasterMind.boards[0].Caption := ' Guessboard ' + inttostr(length(fMasterMind.Boards)) + ' ';
+  For i := 0 To high(fMasterMind.Boards) Do Begin
     // Neu Berechnen der angezeigten Höhe der Boards
-    boards[i].Top := GroupBox1.top + GroupBox1.Height + 1 + (GroupBox1.Height + 1) * i;
+    fMasterMind.boards[i].Top := GroupBox1.top + GroupBox1.Height + 1 + (GroupBox1.Height + 1) * i;
     If i = 1 Then Begin // Deaktivieren der "Lösch" routine innerhalb der bereits evaluierten Boards
-      For j := 0 To Boards[i].ComponentCount - 1 Do Begin
-        If Boards[i].Components[j] Is TShape Then Begin
-          s := Boards[i].Components[j] As TShape;
+      For j := 0 To fMasterMind.Boards[i].ComponentCount - 1 Do Begin
+        If fMasterMind.Boards[i].Components[j] Is TShape Then Begin
+          s := fMasterMind.Boards[i].Components[j] As TShape;
           s.OnMouseUp := Nil;
         End;
       End;
@@ -212,11 +208,11 @@ Var
   s: String;
   g: tGuess;
 Begin
-  g[0] := Boards[0].Components[0] As TShape;
-  g[1] := Boards[0].Components[1] As TShape;
-  g[2] := Boards[0].Components[2] As TShape;
-  g[3] := Boards[0].Components[3] As TShape;
-  s := GetMatchString(g, ColorsToGuess);
+  g[0] := fMasterMind.Boards[0].Components[0] As TShape;
+  g[1] := fMasterMind.Boards[0].Components[1] As TShape;
+  g[2] := fMasterMind.Boards[0].Components[2] As TShape;
+  g[3] := fMasterMind.Boards[0].Components[3] As TShape;
+  s := GetMatchString(g, fMasterMind.ColorsToGuess);
   // Visualisieren
   b := TBitmap.Create;
   b.Width := Shape1.Width;
@@ -233,8 +229,8 @@ Begin
     y := y * (Shape1.Height Div 2);
     b.canvas.Rectangle(x, y, x + (Shape1.Width Div 2) + 1, y + (Shape1.Height Div 2) + 1);
   End;
-  im := TImage.Create(Boards[0]);
-  im.Parent := Boards[0];
+  im := TImage.Create(fMasterMind.Boards[0]);
+  im.Parent := fMasterMind.Boards[0];
   im.top := 3;
   im.left := 4 * (Shape1.Width + 10) + 5;
   im.AutoSize := false;
@@ -304,20 +300,20 @@ End;
 
 Function TForm1.BoardToGuess(Index: integer): TGuess;
 Begin
-  result[0] := Boards[Index].Components[0] As TShape;
-  result[1] := Boards[Index].Components[1] As TShape;
-  result[2] := Boards[Index].Components[2] As TShape;
-  result[3] := Boards[Index].Components[3] As TShape;
+  result[0] := fMasterMind.Boards[Index].Components[0] As TShape;
+  result[1] := fMasterMind.Boards[Index].Components[1] As TShape;
+  result[2] := fMasterMind.Boards[Index].Components[2] As TShape;
+  result[3] := fMasterMind.Boards[Index].Components[3] As TShape;
 End;
 
 Procedure TForm1.FreeBoards;
 Var
   i: Integer;
 Begin
-  For i := 0 To high(Boards) Do Begin
-    Boards[i].free;
+  For i := 0 To high(fMasterMind.Boards) Do Begin
+    fMasterMind.Boards[i].free;
   End;
-  setlength(boards, 0);
+  setlength(fMasterMind.boards, 0);
 End;
 
 Procedure TForm1.ShowAllColors;
@@ -361,14 +357,14 @@ Procedure TForm1.Button3Click(Sender: TObject);
 Begin
   // Checkt Board[0]
   // Check ob überhaupt genug farben gesetzt wurden ..
-  If (Not Assigned(Boards)) Or (Boards[0].ComponentCount <> Length(ColorsToGuess)) Then exit;
+  If (Not Assigned(fMasterMind.Boards)) Or (fMasterMind.Boards[0].ComponentCount <> Length(fMasterMind.ColorsToGuess)) Then exit;
   If CreateBoardEvaluationAndEval Then Begin // Ist es gelöst ?
     button3.enabled := false;
     button7.enabled := false;
-    showmessage('You win with ' + inttostr(length(Boards)) + ' tries.');
+    showmessage('You win with ' + inttostr(length(fMasterMind.Boards)) + ' tries.');
   End
   Else Begin
-    If Length(Boards) = 10 Then Begin // Verliert der Spieler ?
+    If Length(fMasterMind.Boards) = 10 Then Begin // Verliert der Spieler ?
       button7.enabled := false;
       showmessage('You loose.');
     End
@@ -393,8 +389,8 @@ Begin
   For j := 1 To 6 Do Begin
     s := FindComponent('Shape' + inttostr(j)) As TShape;
     b := false;
-    For k := 0 To high(ColorsToGuess) Do Begin
-      If s.Brush.Color = ColorsToGuess[k].Brush.Color Then Begin
+    For k := 0 To high(fMasterMind.ColorsToGuess) Do Begin
+      If s.Brush.Color = fMasterMind.ColorsToGuess[k].Brush.Color Then Begin
         b := true;
         break;
       End;
@@ -403,13 +399,13 @@ Begin
   End;
 
   // Löschen der nicht genutzten Farben aus allen "Lösungen"
-  For i := 1 To high(Boards) Do Begin
-    For j := 0 To Boards[i].ComponentCount - 1 Do Begin
-      If Boards[i].Components[j] Is TShape Then Begin
-        s := Boards[i].Components[j] As TShape;
+  For i := 1 To high(fMasterMind.Boards) Do Begin
+    For j := 0 To fMasterMind.Boards[i].ComponentCount - 1 Do Begin
+      If fMasterMind.Boards[i].Components[j] Is TShape Then Begin
+        s := fMasterMind.Boards[i].Components[j] As TShape;
         b := false;
-        For k := 0 To high(ColorsToGuess) Do Begin
-          If s.Brush.Color = ColorsToGuess[k].Brush.Color Then Begin
+        For k := 0 To high(fMasterMind.ColorsToGuess) Do Begin
+          If s.Brush.Color = fMasterMind.ColorsToGuess[k].Brush.Color Then Begin
             b := true;
             break;
           End;
@@ -501,7 +497,7 @@ Begin
     NewGuess[2] := AviableColors[strtoint(Permutation[3])];
     NewGuess[3] := AviableColors[strtoint(Permutation[4])];
     KeepTrying := false; // Annemen dass wir eine neue passende Permutation gefunden haben
-    For i := 1 To high(Boards) Do Begin
+    For i := 1 To high(fMasterMind.Boards) Do Begin
       // 2.1 Der neue Vorschlag muss unterschiedlich zu allen bisher gefundenen sein
       GuessFromGuessboard := BoardToGuess(i);
       If NewGuess = GuessFromGuessboard Then Begin
@@ -517,15 +513,15 @@ Begin
        * Wollte man dies Ausbauen müsste im Eval Schritt jedes jeweilige Ergebnis
        * als Matchstring an die entdprechenden Boards angehängt werden.
        *)
-      If GetMatchString(GuessFromGuessboard, ColorsToGuess) <> GetMatchString(GuessFromGuessboard, NewGuess) Then Begin
+      If GetMatchString(GuessFromGuessboard, fMasterMind.ColorsToGuess) <> GetMatchString(GuessFromGuessboard, NewGuess) Then Begin
         KeepTrying := true;
         break;
       End;
     End;
   End;
   // 3.1 Löschen der bisherigen Eingabe
-  For i := 0 To Boards[0].Componentcount - 1 Do Begin
-    Boards[0].Components[0].Free;
+  For i := 0 To fMasterMind.Boards[0].Componentcount - 1 Do Begin
+    fMasterMind.Boards[0].Components[0].Free;
   End;
   // 3.2 Setzen der gefundenen Lösung
   For i := 0 To 3 Do Begin
@@ -555,7 +551,7 @@ Begin
   caption := 'Mastermind ver 0.01 by Corpsman | www.Corpsman.de |';
   Randomize;
   fMasterMind := TMasterMind.Create();
-  Boards := Nil;
+  fMasterMind.Boards := Nil;
   button3.enabled := false;
   button5.enabled := false;
   button7.enabled := false;
@@ -573,16 +569,16 @@ Begin
   (*
    * Fügt eine neue Farbe in die Potenzielle Lösung hinzu
    *)
-  If assigned(Boards) And (boards[0].ComponentCount < length(ColorsToGuess)) Then Begin
+  If assigned(fMasterMind.Boards) And (fMasterMind.boards[0].ComponentCount < length(fMasterMind.ColorsToGuess)) Then Begin
     s := sender As TShape;
     // Prüfen obs die Farbe schon gibt..
-    For i := 0 To Boards[0].ComponentCount - 1 Do Begin
-      t := Boards[0].Components[i] As TShape;
+    For i := 0 To fMasterMind.Boards[0].ComponentCount - 1 Do Begin
+      t := fMasterMind.Boards[0].Components[i] As TShape;
       If t.Brush.Color = s.brush.Color Then exit;
     End;
     // Wir erstellen ein neues Element, aber an welcher Position ?
-    t := TShape.Create(boards[0]);
-    t.Parent := boards[0];
+    t := TShape.Create(fMasterMind.boards[0]);
+    t.Parent := fMasterMind.boards[0];
     t.Shape := stCircle;
     t.Brush.Color := s.brush.Color;
     t.Top := 3;
@@ -590,11 +586,11 @@ Begin
     t.Height := s.Height;
     t.OnMouseUp := @OnBoard0ShapeMouseUp;
     // Suchen der 1. Freien Position
-    For i := 0 To boards[0].ComponentCount - 1 Do Begin
+    For i := 0 To fMasterMind.boards[0].ComponentCount - 1 Do Begin
       l := 10 + i * (s.Width + 10);
       b := true;
-      For j := 0 To boards[0].ComponentCount - 2 Do Begin
-        If l = (boards[0].Components[j] As TShape).left Then Begin
+      For j := 0 To fMasterMind.boards[0].ComponentCount - 2 Do Begin
+        If l = (fMasterMind.boards[0].Components[j] As TShape).left Then Begin
           b := false;
           break;
         End;

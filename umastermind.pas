@@ -19,9 +19,11 @@ Unit umastermind;
 Interface
 
 Uses
-  Classes, SysUtils;
+  Classes, SysUtils, ExtCtrls, StdCtrls;
 
 Type
+
+  tGuess = Array[0..3] Of TShape;
 
   { TMasterMind }
 
@@ -29,6 +31,8 @@ Type
   private
   public
     SixColorGame: Boolean; // True, wenn mit 6 Farben zur Auswahl gespielt wird.
+    ColorsToGuess: TGuess; // Die zu eratenden Farben
+    Boards: Array Of TGroupBox; // Die bisherigen Rateversuche
     Constructor Create(); virtual;
     Destructor Destroy(); override;
   End;
