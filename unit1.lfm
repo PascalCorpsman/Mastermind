@@ -19,8 +19,8 @@ object Form1: TForm1
     Top = 80
     Width = 376
     Caption = ' Available colors '
-    ClientHeight = 47
-    ClientWidth = 374
+    ClientHeight = 44
+    ClientWidth = 372
     TabOrder = 0
     object Shape1: TShape
       Left = 8
@@ -88,8 +88,8 @@ object Form1: TForm1
     Top = 0
     Width = 200
     Caption = ' Start game '
-    ClientHeight = 47
-    ClientWidth = 198
+    ClientHeight = 44
+    ClientWidth = 196
     TabOrder = 1
     object Button1: TButton
       Left = 0

@@ -78,7 +78,6 @@ Type
     Procedure ShowAllColors; // Zeigt alle Vorschlagsfarben an
     Procedure HideAllColors; // Versteckt alle Vorschlagsfarben
     Procedure InitColors; // Initialisiert Colors und macht nur diejenigen Vorschlagsfarben sichtbar, welche verwendet wurden
-    Procedure AddEmptyBoard; // Schiebt alle Boards um eins nach unten und erstellt ein neues leeres
     Function CreateBoardEvaluationAndEval: Boolean; // Erzeugt das Auswertungsbildchen in Board[0], true, wenn die Lösung gefunden wurde
     Procedure OnBoard0ShapeMouseUp(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer); // Callback zum entfernen einer Farbe aus Board[0]
@@ -127,38 +126,6 @@ Begin
       If Not b Then Begin
         fMasterMind.ColorsToGuess[i] := s;
         s.Visible := true;
-      End;
-    End;
-  End;
-End;
-
-Procedure TForm1.AddEmptyBoard;
-Var
-  i, j: integer;
-  s: TShape;
-Begin
-  setlength(fMasterMind.Boards, high(fMasterMind.Boards) + 2); // + 1 Board
-  // Shift alle Boards eins nach hinten
-  For i := high(fMasterMind.Boards) Downto 1 Do Begin
-    fMasterMind.boards[i] := fMasterMind.Boards[i - 1];
-  End;
-  // Neues Board initialisieren
-  fMasterMind.boards[0] := TGroupBox.Create(self);
-  fMasterMind.boards[0].Parent := self;
-  fMasterMind.boards[0].Left := GroupBox1.Left;
-  fMasterMind.boards[0].Width := length(fMasterMind.ColorsToGuess) * (Shape1.Width + 10) + Shape1.Width + 20 { Bereich für die Lösung};
-  fMasterMind.boards[0].Height := GroupBox1.Height;
-  fMasterMind.boards[0].Name := 'Guessboard' + inttostr(length(fMasterMind.Boards));
-  fMasterMind.boards[0].Caption := ' Guessboard ' + inttostr(length(fMasterMind.Boards)) + ' ';
-  For i := 0 To high(fMasterMind.Boards) Do Begin
-    // Neu Berechnen der angezeigten Höhe der Boards
-    fMasterMind.boards[i].Top := GroupBox1.top + GroupBox1.Height + 1 + (GroupBox1.Height + 1) * i;
-    If i = 1 Then Begin // Deaktivieren der "Lösch" routine innerhalb der bereits evaluierten Boards
-      For j := 0 To fMasterMind.Boards[i].ComponentCount - 1 Do Begin
-        If fMasterMind.Boards[i].Components[j] Is TShape Then Begin
-          s := fMasterMind.Boards[i].Components[j] As TShape;
-          s.OnMouseUp := Nil;
-        End;
       End;
     End;
   End;
@@ -231,7 +198,7 @@ Begin
   HideAllColors;
   InitColors;
   fMasterMind.MixColors;
-  AddEmptyBoard;
+  fMasterMind.AddEmptyBoard(self, GroupBox1, Shape1.Width);
   button3.enabled := true; // Check Freischalten
   button5.enabled := false; // Hide unused sperren
   button7.enabled := true; // Tipp Freischalten
@@ -245,7 +212,7 @@ Begin
   InitColors;
   ShowAllColors;
   fMasterMind.MixColors;
-  AddEmptyBoard;
+  fMasterMind.AddEmptyBoard(self, GroupBox1, Shape1.Width);
   button3.enabled := true; // Check Freischalten
   button5.enabled := false; // Hide unused sperren
   button7.enabled := true; // Tipp Freischalten
@@ -267,7 +234,7 @@ Begin
       showmessage('You loose.');
     End
     Else Begin
-      AddEmptyBoard;
+      fMasterMind.AddEmptyBoard(self, GroupBox1, Shape1.Width);
     End;
   End;
 End;

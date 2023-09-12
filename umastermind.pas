@@ -19,7 +19,7 @@ Unit umastermind;
 Interface
 
 Uses
-  Classes, SysUtils, ExtCtrls, StdCtrls;
+  Classes, SysUtils, ExtCtrls, StdCtrls, controls;
 
 Type
 
@@ -39,6 +39,8 @@ Type
     Procedure FreeBoards; // Gibt alle Boards Frei
     Procedure MixColors; // Mischt Colors
     Function BoardToGuess(Index: integer): TGuess;
+    Procedure AddEmptyBoard(Const aOwner: TWinControl;
+      Const TemplateGroupBox: TGroupBox; CirleDiameter: integer); // Schiebt alle Boards um eins nach unten und erstellt ein neues leeres
   End;
 
 Operator = (a, b: tGuess): Boolean;
@@ -110,18 +112,18 @@ End;
 
 { TMasterMind }
 
-constructor TMasterMind.Create;
+Constructor TMasterMind.Create;
 Begin
   Inherited create;
   SixColorGame := false;
 End;
 
-destructor TMasterMind.Destroy;
+Destructor TMasterMind.Destroy;
 Begin
-
+  // Nothing todo ?
 End;
 
-procedure TMasterMind.FreeBoards;
+Procedure TMasterMind.FreeBoards;
 Var
   i: Integer;
 Begin
@@ -131,7 +133,7 @@ Begin
   setlength(boards, 0);
 End;
 
-procedure TMasterMind.MixColors;
+Procedure TMasterMind.MixColors;
 Var
   i, j, k: integer;
   tmp: TShape;
@@ -147,12 +149,45 @@ Begin
   End;
 End;
 
-function TMasterMind.BoardToGuess(Index: integer): TGuess;
+Function TMasterMind.BoardToGuess(Index: integer): TGuess;
 Begin
   result[0] := Boards[Index].Components[0] As TShape;
   result[1] := Boards[Index].Components[1] As TShape;
   result[2] := Boards[Index].Components[2] As TShape;
   result[3] := Boards[Index].Components[3] As TShape;
+End;
+
+Procedure TMasterMind.AddEmptyBoard(Const aOwner: TWinControl; Const TemplateGroupBox: TGroupBox; CirleDiameter: integer);
+Var
+  i, j: integer;
+  s: TShape;
+Begin
+  setlength(Boards, high(Boards) + 2); // + 1 Board
+  // Shift alle Boards eins nach hinten
+  For i := high(Boards) Downto 1 Do Begin
+    boards[i] := Boards[i - 1];
+  End;
+  // Neues Board initialisieren
+  boards[0] := TGroupBox.Create(aOwner);
+  boards[0].Parent := aOwner;
+  boards[0].Left := TemplateGroupBox.Left;
+  boards[0].Width := length(ColorsToGuess) * (CirleDiameter + 10) + CirleDiameter + 20 { Bereich für die Lösung};
+  boards[0].Height := TemplateGroupBox.Height;
+  boards[0].Name := 'Guessboard' + inttostr(length(Boards));
+  boards[0].Caption := ' Guessboard ' + inttostr(length(Boards)) + ' ';
+  For i := 0 To high(Boards) Do Begin
+    // Neu Berechnen der angezeigten Höhe der Boards
+    boards[i].Top := TemplateGroupBox.top + TemplateGroupBox.Height + 1 + (TemplateGroupBox.Height + 1) * i;
+    If i = 1 Then Begin // Deaktivieren der "Lösch" routine innerhalb der bereits evaluierten Boards
+      For j := 0 To Boards[i].ComponentCount - 1 Do Begin
+        If Boards[i].Components[j] Is TShape Then Begin
+          s := Boards[i].Components[j] As TShape;
+          s.OnMouseUp := Nil;
+        End;
+      End;
+    End;
+  End;
+
 End;
 
 End.
