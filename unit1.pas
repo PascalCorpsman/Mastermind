@@ -77,8 +77,7 @@ Type
 
     Procedure ShowAllColors; // Zeigt alle Vorschlagsfarben an
     Procedure HideAllColors; // Versteckt alle Vorschlagsfarben
-    Procedure InitColors; // Initialisiert Colors und macht nur diejenigen Vorschlagsfarben sichtbar, welche verwendet wurden
-    Function CreateBoardEvaluationAndEval: Boolean; // Erzeugt das Auswertungsbildchen in Board[0], true, wenn die Lösung gefunden wurde
+
     Procedure OnBoard0ShapeMouseUp(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer); // Callback zum entfernen einer Farbe aus Board[0]
 
@@ -104,76 +103,6 @@ Begin
   End;
 End;
 
-Procedure TForm1.InitColors;
-Var
-  k, j, i: Integer;
-  b: boolean;
-  s: TShape;
-Begin
-  For i := 0 To high(fMasterMind.ColorsToGuess) Do Begin
-    fMasterMind.ColorsToGuess[i] := Nil;
-    b := true;
-    While b Do Begin
-      j := random(6) + 1;
-      s := TShape(FindComponent('Shape' + inttostr(j)));
-      b := false;
-      For k := 0 To i - 1 Do Begin
-        If fMasterMind.ColorsToGuess[k] = s Then Begin
-          b := true;
-          break;
-        End;
-      End;
-      If Not b Then Begin
-        fMasterMind.ColorsToGuess[i] := s;
-        s.Visible := true;
-      End;
-    End;
-  End;
-End;
-
-Function TForm1.CreateBoardEvaluationAndEval: Boolean;
-Var
-  x, y, i: integer;
-  b: Tbitmap;
-  im: TImage;
-  s: String;
-  g: tGuess;
-Begin
-  g[0] := fMasterMind.Boards[0].Components[0] As TShape;
-  g[1] := fMasterMind.Boards[0].Components[1] As TShape;
-  g[2] := fMasterMind.Boards[0].Components[2] As TShape;
-  g[3] := fMasterMind.Boards[0].Components[3] As TShape;
-  s := GetMatchString(g, fMasterMind.ColorsToGuess);
-  // Visualisieren
-  b := TBitmap.Create;
-  b.Width := Shape1.Width;
-  b.Height := Shape1.Height;
-  For i := 0 To 3 Do Begin
-    Case s[i + 1] Of
-      '-': b.Canvas.Brush.Color := clGray;
-      'w': b.Canvas.Brush.Color := clwhite;
-      's': b.Canvas.Brush.Color := clBlack;
-    End;
-    x := i Mod 2;
-    y := i Div 2;
-    x := x * (Shape1.Width Div 2);
-    y := y * (Shape1.Height Div 2);
-    b.canvas.Rectangle(x, y, x + (Shape1.Width Div 2) + 1, y + (Shape1.Height Div 2) + 1);
-  End;
-  im := TImage.Create(fMasterMind.Boards[0]);
-  im.Parent := fMasterMind.Boards[0];
-  im.top := 3;
-  im.left := 4 * (Shape1.Width + 10) + 5;
-  im.AutoSize := false;
-  im.Width := Shape1.Width;
-  im.Height := Shape1.Height;
-  im.Center := true;
-  im.Picture.Assign(b);
-  b.free;
-  If (s[1] <> '-') And (fMasterMind.SixColorGame) Then Button5.Enabled := true;
-  result := (s[1] = 's') And (s[2] = 's') And (s[3] = 's') And (s[4] = 's');
-End;
-
 Procedure TForm1.OnBoard0ShapeMouseUp(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
 Begin
@@ -196,7 +125,7 @@ Begin
   fMasterMind.SixColorGame := false;
   fMasterMind.FreeBoards;
   HideAllColors;
-  InitColors;
+  fMasterMind.InitColors(self);
   fMasterMind.MixColors;
   fMasterMind.AddEmptyBoard(self, GroupBox1, Shape1.Width);
   button3.enabled := true; // Check Freischalten
@@ -209,7 +138,7 @@ Begin
   // Starte Spiel mit 6 Farben
   fMasterMind.SixColorGame := true;
   fMasterMind.FreeBoards;
-  InitColors;
+  fMasterMind.InitColors(self);
   ShowAllColors;
   fMasterMind.MixColors;
   fMasterMind.AddEmptyBoard(self, GroupBox1, Shape1.Width);
@@ -223,7 +152,7 @@ Begin
   // Checkt Board[0]
   // Check ob überhaupt genug farben gesetzt wurden ..
   If (Not Assigned(fMasterMind.Boards)) Or (fMasterMind.Boards[0].ComponentCount <> Length(fMasterMind.ColorsToGuess)) Then exit;
-  If CreateBoardEvaluationAndEval Then Begin // Ist es gelöst ?
+  If fMasterMind.CreateBoardEvaluationAndEval(Shape1.Width, Button5) Then Begin // Ist es gelöst ?
     button3.enabled := false;
     button7.enabled := false;
     showmessage('You win with ' + inttostr(length(fMasterMind.Boards)) + ' tries.');

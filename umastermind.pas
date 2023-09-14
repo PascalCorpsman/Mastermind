@@ -41,6 +41,8 @@ Type
     Function BoardToGuess(Index: integer): TGuess;
     Procedure AddEmptyBoard(Const aOwner: TWinControl;
       Const TemplateGroupBox: TGroupBox; CirleDiameter: integer); // Schiebt alle Boards um eins nach unten und erstellt ein neues leeres
+    Procedure InitColors(Const aOwner: TWinControl); // Initialisiert Colors und macht nur diejenigen Vorschlagsfarben sichtbar, welche verwendet wurden
+    Function CreateBoardEvaluationAndEval(CirleDiameter: integer; Const HideUnusedButton: TButton): Boolean; // Erzeugt das Auswertungsbildchen in Board[0], true, wenn die Lösung gefunden wurde
   End;
 
 Operator = (a, b: tGuess): Boolean;
@@ -52,6 +54,8 @@ Operator = (a, b: tGuess): Boolean;
 Function GetMatchString(Const ColorGuess, ColorMatch: TGuess): String;
 
 Implementation
+
+Uses Graphics;
 
 Operator = (a, b: tGuess): Boolean;
 Begin
@@ -112,18 +116,18 @@ End;
 
 { TMasterMind }
 
-Constructor TMasterMind.Create;
+constructor TMasterMind.Create;
 Begin
   Inherited create;
   SixColorGame := false;
 End;
 
-Destructor TMasterMind.Destroy;
+destructor TMasterMind.Destroy;
 Begin
   // Nothing todo ?
 End;
 
-Procedure TMasterMind.FreeBoards;
+procedure TMasterMind.FreeBoards;
 Var
   i: Integer;
 Begin
@@ -133,7 +137,7 @@ Begin
   setlength(boards, 0);
 End;
 
-Procedure TMasterMind.MixColors;
+procedure TMasterMind.MixColors;
 Var
   i, j, k: integer;
   tmp: TShape;
@@ -149,7 +153,7 @@ Begin
   End;
 End;
 
-Function TMasterMind.BoardToGuess(Index: integer): TGuess;
+function TMasterMind.BoardToGuess(Index: integer): TGuess;
 Begin
   result[0] := Boards[Index].Components[0] As TShape;
   result[1] := Boards[Index].Components[1] As TShape;
@@ -157,7 +161,8 @@ Begin
   result[3] := Boards[Index].Components[3] As TShape;
 End;
 
-Procedure TMasterMind.AddEmptyBoard(Const aOwner: TWinControl; Const TemplateGroupBox: TGroupBox; CirleDiameter: integer);
+procedure TMasterMind.AddEmptyBoard(const aOwner: TWinControl;
+  const TemplateGroupBox: TGroupBox; CirleDiameter: integer);
 Var
   i, j: integer;
   s: TShape;
@@ -187,7 +192,77 @@ Begin
       End;
     End;
   End;
+End;
 
+procedure TMasterMind.InitColors(const aOwner: TWinControl);
+Var
+  k, j, i: Integer;
+  b: boolean;
+  s: TShape;
+Begin
+  For i := 0 To high(ColorsToGuess) Do Begin
+    ColorsToGuess[i] := Nil;
+    b := true;
+    While b Do Begin
+      j := random(6) + 1;
+      s := TShape(aOwner.FindComponent('Shape' + inttostr(j)));
+      b := false;
+      For k := 0 To i - 1 Do Begin
+        If ColorsToGuess[k] = s Then Begin
+          b := true;
+          break;
+        End;
+      End;
+      If Not b Then Begin
+        ColorsToGuess[i] := s;
+        s.Visible := true;
+      End;
+    End;
+  End;
+End;
+
+function TMasterMind.CreateBoardEvaluationAndEval(CirleDiameter: integer;
+  const HideUnusedButton: TButton): Boolean;
+Var
+  x, y, i: integer;
+  b: Tbitmap;
+  im: TImage;
+  s: String;
+  g: tGuess;
+Begin
+  g[0] := Boards[0].Components[0] As TShape;
+  g[1] := Boards[0].Components[1] As TShape;
+  g[2] := Boards[0].Components[2] As TShape;
+  g[3] := Boards[0].Components[3] As TShape;
+  s := GetMatchString(g, ColorsToGuess);
+  // Visualisieren
+  b := TBitmap.Create;
+  b.Width := CirleDiameter;
+  b.Height := CirleDiameter;
+  For i := 0 To 3 Do Begin
+    Case s[i + 1] Of
+      '-': b.Canvas.Brush.Color := clGray;
+      'w': b.Canvas.Brush.Color := clwhite;
+      's': b.Canvas.Brush.Color := clBlack;
+    End;
+    x := i Mod 2;
+    y := i Div 2;
+    x := x * (CirleDiameter Div 2);
+    y := y * (CirleDiameter Div 2);
+    b.canvas.Rectangle(x, y, x + (CirleDiameter Div 2) + 1, y + (CirleDiameter Div 2) + 1);
+  End;
+  im := TImage.Create(Boards[0]);
+  im.Parent := Boards[0];
+  im.top := 3;
+  im.left := 4 * (CirleDiameter + 10) + 5;
+  im.AutoSize := false;
+  im.Width := CirleDiameter;
+  im.Height := CirleDiameter;
+  im.Center := true;
+  im.Picture.Assign(b);
+  b.free;
+  If (s[1] <> '-') And (SixColorGame) Then HideUnusedButton.Enabled := true;
+  result := (s[1] = 's') And (s[2] = 's') And (s[3] = 's') And (s[4] = 's');
 End;
 
 End.
