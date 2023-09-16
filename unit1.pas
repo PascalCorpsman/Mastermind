@@ -235,92 +235,13 @@ Begin
 End;
 
 Procedure TForm1.Button7Click(Sender: TObject);
-Var
-  AviableColors: Array Of TShape;
-  s: TShape; // Zwischenspeicher, für den leichteren Zugriff
-  i: Integer;
-  KeepTrying: Boolean;
-  Permutation: String;
-  GuessFromGuessboard, NewGuess: TGuess;
 Begin
-  (*
-   * Die Idee hinter dem Algorithmus :
-   * 1. Raten einer zufälligen Farbreihenfolge
-   * 2. Prüfen ob diese Reihenfolge alle bisher bekannten Ergebnisse Bestätigt
-   * 3. Wenn Ja   -> diese Vorschlagen
-   *    Wenn Nein -> zrück zu 1.
-   *
-   * Der Algorithmus verwendet im Kern keine Informationen, welche nicht auch dem User bekannt
-   * sind. Er spielt also ehrlich.
-   * Einziger Unterschied, ein Mensch würde evtl. den neuen Vorschlag durch Logik bestimmen und
-   * nicht raten.
-   * Effizient wird der Algorithmus durch die Konsequente Vermeidung von Widerhohlungsfehlern
-   * so ist quasi garantiert, das bei jeder neuen Iteration (Tipp -> Check) die Wissensbasis
-   * bereichert wird mit neuem Wissen und deswegen die Lösung näher rückt *g*.
-   *)
+  // Tipp
   If Not button3.enabled Then exit; // Wenn wir nicht mehr die Möglichkeit zum "checken" haben brauchts auch keinen Tipp mehr.
   If button5.enabled Then Begin // Wenn die Möglichkeit besteht Farben aus zu Grenzen, dann Weg damit
     button5.Click;
   End;
-  // 1. Bestimmen aller Möglichen Farbkombinationen
-  AviableColors := Nil;
-  For i := 1 To 6 Do Begin
-    s := (FindComponent('Shape' + inttostr(i))) As Tshape;
-    If s.Visible Then Begin
-      setlength(AviableColors, high(AviableColors) + 2);
-      AviableColors[high(AviableColors)] := s;
-    End;
-  End;
-  If length(AviableColors) < 4 Then Begin
-    Raise exception.create('Logik fehler');
-  End;
-  // 2. bestimmen einer Poteniellen lösung
-  KeepTrying := true;
-  While KeepTrying Do Begin
-    // Bestimmen einer Zufälligen Permutation der indizees von AviableColors
-    Permutation := '';
-    While length(Permutation) < 4 Do Begin
-      i := random(length(AviableColors));
-      If pos(inttostr(i), Permutation) = 0 Then Begin
-        Permutation := Permutation + inttostr(i);
-      End;
-    End;
-    // Umwandeln der Permutation in eine TGuess
-    NewGuess[0] := AviableColors[strtoint(Permutation[1])];
-    NewGuess[1] := AviableColors[strtoint(Permutation[2])];
-    NewGuess[2] := AviableColors[strtoint(Permutation[3])];
-    NewGuess[3] := AviableColors[strtoint(Permutation[4])];
-    KeepTrying := false; // Annemen dass wir eine neue passende Permutation gefunden haben
-    For i := 1 To high(fMasterMind.Boards) Do Begin
-      // 2.1 Der neue Vorschlag muss unterschiedlich zu allen bisher gefundenen sein
-      GuessFromGuessboard := fMasterMind.BoardToGuess(i);
-      If NewGuess = GuessFromGuessboard Then Begin
-        KeepTrying := true;
-        break;
-      End;
-      // 2.2 Prüfen ob der neue Vorschlag bei allen alten Ergebnissen das selbe Ergebnis erzeugt => also valide ist.
-      (*
-       * Hier wird auf die zu eratende Farbreihenfolge zurück gegriffen, weil
-       * die für den User sichtbare Version nirgends gespeichert wird.
-       * ColorsToGuess wird aber nicht direkt ausgewertet oder verglichen damit
-       * bleibt der Algorithmus entsprechend "blind" gegen die zu erratende Farbsequenz
-       * Wollte man dies Ausbauen müsste im Eval Schritt jedes jeweilige Ergebnis
-       * als Matchstring an die entdprechenden Boards angehängt werden.
-       *)
-      If GetMatchString(GuessFromGuessboard, fMasterMind.ColorsToGuess) <> GetMatchString(GuessFromGuessboard, NewGuess) Then Begin
-        KeepTrying := true;
-        break;
-      End;
-    End;
-  End;
-  // 3.1 Löschen der bisherigen Eingabe
-  For i := 0 To fMasterMind.Boards[0].Componentcount - 1 Do Begin
-    fMasterMind.Boards[0].Components[0].Free;
-  End;
-  // 3.2 Setzen der gefundenen Lösung
-  For i := 0 To 3 Do Begin
-    NewGuess[i].OnMouseUp(NewGuess[i], mbLeft, [ssleft], 1, 1);
-  End;
+  fMasterMind.CreateTipp(self);
 End;
 
 Procedure TForm1.Button8Click(Sender: TObject);
@@ -345,7 +266,6 @@ Begin
   caption := 'Mastermind ver 0.01 by Corpsman | www.Corpsman.de |';
   Randomize;
   fMasterMind := TMasterMind.Create();
-  fMasterMind.Boards := Nil;
   button3.enabled := false;
   button5.enabled := false;
   button7.enabled := false;

@@ -43,6 +43,7 @@ Type
       Const TemplateGroupBox: TGroupBox; CirleDiameter: integer); // Schiebt alle Boards um eins nach unten und erstellt ein neues leeres
     Procedure InitColors(Const aOwner: TWinControl); // Initialisiert Colors und macht nur diejenigen Vorschlagsfarben sichtbar, welche verwendet wurden
     Function CreateBoardEvaluationAndEval(CirleDiameter: integer; Const HideUnusedButton: TButton): Boolean; // Erzeugt das Auswertungsbildchen in Board[0], true, wenn die Lösung gefunden wurde
+    Procedure CreateTipp(aOwner: TWinControl);
   End;
 
 Operator = (a, b: tGuess): Boolean;
@@ -116,18 +117,19 @@ End;
 
 { TMasterMind }
 
-constructor TMasterMind.Create;
+Constructor TMasterMind.Create;
 Begin
   Inherited create;
   SixColorGame := false;
+  Boards := Nil;
 End;
 
-destructor TMasterMind.Destroy;
+Destructor TMasterMind.Destroy;
 Begin
   // Nothing todo ?
 End;
 
-procedure TMasterMind.FreeBoards;
+Procedure TMasterMind.FreeBoards;
 Var
   i: Integer;
 Begin
@@ -137,7 +139,7 @@ Begin
   setlength(boards, 0);
 End;
 
-procedure TMasterMind.MixColors;
+Procedure TMasterMind.MixColors;
 Var
   i, j, k: integer;
   tmp: TShape;
@@ -153,7 +155,7 @@ Begin
   End;
 End;
 
-function TMasterMind.BoardToGuess(Index: integer): TGuess;
+Function TMasterMind.BoardToGuess(Index: integer): TGuess;
 Begin
   result[0] := Boards[Index].Components[0] As TShape;
   result[1] := Boards[Index].Components[1] As TShape;
@@ -161,8 +163,8 @@ Begin
   result[3] := Boards[Index].Components[3] As TShape;
 End;
 
-procedure TMasterMind.AddEmptyBoard(const aOwner: TWinControl;
-  const TemplateGroupBox: TGroupBox; CirleDiameter: integer);
+Procedure TMasterMind.AddEmptyBoard(Const aOwner: TWinControl;
+  Const TemplateGroupBox: TGroupBox; CirleDiameter: integer);
 Var
   i, j: integer;
   s: TShape;
@@ -194,7 +196,7 @@ Begin
   End;
 End;
 
-procedure TMasterMind.InitColors(const aOwner: TWinControl);
+Procedure TMasterMind.InitColors(Const aOwner: TWinControl);
 Var
   k, j, i: Integer;
   b: boolean;
@@ -221,8 +223,8 @@ Begin
   End;
 End;
 
-function TMasterMind.CreateBoardEvaluationAndEval(CirleDiameter: integer;
-  const HideUnusedButton: TButton): Boolean;
+Function TMasterMind.CreateBoardEvaluationAndEval(CirleDiameter: integer;
+  Const HideUnusedButton: TButton): Boolean;
 Var
   x, y, i: integer;
   b: Tbitmap;
@@ -263,6 +265,91 @@ Begin
   b.free;
   If (s[1] <> '-') And (SixColorGame) Then HideUnusedButton.Enabled := true;
   result := (s[1] = 's') And (s[2] = 's') And (s[3] = 's') And (s[4] = 's');
+End;
+
+Procedure TMasterMind.CreateTipp(aOwner: TWinControl);
+Var
+  AviableColors: Array Of TShape;
+  s: TShape; // Zwischenspeicher, für den leichteren Zugriff
+  i: Integer;
+  KeepTrying: Boolean;
+  Permutation: String;
+  GuessFromGuessboard, NewGuess: TGuess;
+Begin
+  (*
+   * Die Idee hinter dem Algorithmus :
+   * 1. Raten einer zufälligen Farbreihenfolge
+   * 2. Prüfen ob diese Reihenfolge alle bisher bekannten Ergebnisse Bestätigt
+   * 3. Wenn Ja   -> diese Vorschlagen
+   *    Wenn Nein -> zrück zu 1.
+   *
+   * Der Algorithmus verwendet im Kern keine Informationen, welche nicht auch dem User bekannt
+   * sind. Er spielt also ehrlich.
+   * Einziger Unterschied, ein Mensch würde evtl. den neuen Vorschlag durch Logik bestimmen und
+   * nicht raten.
+   * Effizient wird der Algorithmus durch die Konsequente Vermeidung von Widerhohlungsfehlern
+   * so ist quasi garantiert, das bei jeder neuen Iteration (Tipp -> Check) die Wissensbasis
+   * bereichert wird mit neuem Wissen und deswegen die Lösung näher rückt *g*.
+   *)
+  // 1. Bestimmen aller Möglichen Farbkombinationen
+  AviableColors := Nil;
+  For i := 1 To 6 Do Begin
+    s := (aOwner.FindComponent('Shape' + inttostr(i))) As Tshape;
+    If s.Visible Then Begin
+      setlength(AviableColors, high(AviableColors) + 2);
+      AviableColors[high(AviableColors)] := s;
+    End;
+  End;
+  If length(AviableColors) < 4 Then Begin
+    Raise exception.create('Logik fehler');
+  End;
+  // 2. bestimmen einer Poteniellen lösung
+  KeepTrying := true;
+  While KeepTrying Do Begin
+    // Bestimmen einer Zufälligen Permutation der indizees von AviableColors
+    Permutation := '';
+    While length(Permutation) < 4 Do Begin
+      i := random(length(AviableColors));
+      If pos(inttostr(i), Permutation) = 0 Then Begin
+        Permutation := Permutation + inttostr(i);
+      End;
+    End;
+    // Umwandeln der Permutation in eine TGuess
+    NewGuess[0] := AviableColors[strtoint(Permutation[1])];
+    NewGuess[1] := AviableColors[strtoint(Permutation[2])];
+    NewGuess[2] := AviableColors[strtoint(Permutation[3])];
+    NewGuess[3] := AviableColors[strtoint(Permutation[4])];
+    KeepTrying := false; // Annemen dass wir eine neue passende Permutation gefunden haben
+    For i := 1 To high(Boards) Do Begin
+      // 2.1 Der neue Vorschlag muss unterschiedlich zu allen bisher gefundenen sein
+      GuessFromGuessboard := BoardToGuess(i);
+      If NewGuess = GuessFromGuessboard Then Begin
+        KeepTrying := true;
+        break;
+      End;
+      // 2.2 Prüfen ob der neue Vorschlag bei allen alten Ergebnissen das selbe Ergebnis erzeugt => also valide ist.
+      (*
+       * Hier wird auf die zu eratende Farbreihenfolge zurück gegriffen, weil
+       * die für den User sichtbare Version nirgends gespeichert wird.
+       * ColorsToGuess wird aber nicht direkt ausgewertet oder verglichen damit
+       * bleibt der Algorithmus entsprechend "blind" gegen die zu erratende Farbsequenz
+       * Wollte man dies Ausbauen müsste im Eval Schritt jedes jeweilige Ergebnis
+       * als Matchstring an die entdprechenden Boards angehängt werden.
+       *)
+      If GetMatchString(GuessFromGuessboard, ColorsToGuess) <> GetMatchString(GuessFromGuessboard, NewGuess) Then Begin
+        KeepTrying := true;
+        break;
+      End;
+    End;
+  End;
+  // 3.1 Löschen der bisherigen Eingabe
+  For i := 0 To Boards[0].Componentcount - 1 Do Begin
+    Boards[0].Components[0].Free;
+  End;
+  // 3.2 Setzen der gefundenen Lösung
+  For i := 0 To 3 Do Begin
+    NewGuess[i].OnMouseUp(NewGuess[i], mbLeft, [ssleft], 1, 1);
+  End;
 End;
 
 End.
