@@ -44,6 +44,11 @@ Type
     Procedure InitColors(Const aOwner: TWinControl); // Initialisiert Colors und macht nur diejenigen Vorschlagsfarben sichtbar, welche verwendet wurden
     Function CreateBoardEvaluationAndEval(CirleDiameter: integer; Const HideUnusedButton: TButton): Boolean; // Erzeugt das Auswertungsbildchen in Board[0], true, wenn die Lösung gefunden wurde
     Procedure CreateTipp(aOwner: TWinControl);
+    Procedure HideAllColors(aOwner: TWinControl); // Versteckt alle Vorschlagsfarben
+    Procedure ShowAllColors(aOwner: TWinControl); // Zeigt alle Vorschlagsfarben an
+
+    Procedure StartNewGame(SixPlayer: Boolean; aOwner: TWinControl;
+      Const TemplateGroupBox: TGroupBox; CirleDiameter: integer);
   End;
 
 Operator = (a, b: tGuess): Boolean;
@@ -117,19 +122,19 @@ End;
 
 { TMasterMind }
 
-Constructor TMasterMind.Create;
+constructor TMasterMind.Create;
 Begin
   Inherited create;
   SixColorGame := false;
   Boards := Nil;
 End;
 
-Destructor TMasterMind.Destroy;
+destructor TMasterMind.Destroy;
 Begin
   // Nothing todo ?
 End;
 
-Procedure TMasterMind.FreeBoards;
+procedure TMasterMind.FreeBoards;
 Var
   i: Integer;
 Begin
@@ -139,7 +144,7 @@ Begin
   setlength(boards, 0);
 End;
 
-Procedure TMasterMind.MixColors;
+procedure TMasterMind.MixColors;
 Var
   i, j, k: integer;
   tmp: TShape;
@@ -155,7 +160,7 @@ Begin
   End;
 End;
 
-Function TMasterMind.BoardToGuess(Index: integer): TGuess;
+function TMasterMind.BoardToGuess(Index: integer): TGuess;
 Begin
   result[0] := Boards[Index].Components[0] As TShape;
   result[1] := Boards[Index].Components[1] As TShape;
@@ -163,8 +168,8 @@ Begin
   result[3] := Boards[Index].Components[3] As TShape;
 End;
 
-Procedure TMasterMind.AddEmptyBoard(Const aOwner: TWinControl;
-  Const TemplateGroupBox: TGroupBox; CirleDiameter: integer);
+procedure TMasterMind.AddEmptyBoard(const aOwner: TWinControl;
+  const TemplateGroupBox: TGroupBox; CirleDiameter: integer);
 Var
   i, j: integer;
   s: TShape;
@@ -196,7 +201,7 @@ Begin
   End;
 End;
 
-Procedure TMasterMind.InitColors(Const aOwner: TWinControl);
+procedure TMasterMind.InitColors(const aOwner: TWinControl);
 Var
   k, j, i: Integer;
   b: boolean;
@@ -223,8 +228,8 @@ Begin
   End;
 End;
 
-Function TMasterMind.CreateBoardEvaluationAndEval(CirleDiameter: integer;
-  Const HideUnusedButton: TButton): Boolean;
+function TMasterMind.CreateBoardEvaluationAndEval(CirleDiameter: integer;
+  const HideUnusedButton: TButton): Boolean;
 Var
   x, y, i: integer;
   b: Tbitmap;
@@ -267,7 +272,7 @@ Begin
   result := (s[1] = 's') And (s[2] = 's') And (s[3] = 's') And (s[4] = 's');
 End;
 
-Procedure TMasterMind.CreateTipp(aOwner: TWinControl);
+procedure TMasterMind.CreateTipp(aOwner: TWinControl);
 Var
   AviableColors: Array Of TShape;
   s: TShape; // Zwischenspeicher, für den leichteren Zugriff
@@ -350,6 +355,39 @@ Begin
   For i := 0 To 3 Do Begin
     NewGuess[i].OnMouseUp(NewGuess[i], mbLeft, [ssleft], 1, 1);
   End;
+End;
+
+procedure TMasterMind.HideAllColors(aOwner: TWinControl);
+Var
+  i: Integer;
+Begin
+  For i := 1 To 6 Do Begin
+    TShape(aOwner.FindComponent('Shape' + inttostr(i))).visible := false;
+  End;
+End;
+
+procedure TMasterMind.ShowAllColors(aOwner: TWinControl);
+Var
+  i: Integer; // Zeigen aber wieder alle an, so das der User nicht weiß welche beiden wir nicht nutzen
+Begin
+  For i := 1 To 6 Do Begin
+    TShape(aOwner.FindComponent('Shape' + inttostr(i))).visible := true;
+  End;
+End;
+
+procedure TMasterMind.StartNewGame(SixPlayer: Boolean; aOwner: TWinControl;
+  const TemplateGroupBox: TGroupBox; CirleDiameter: integer);
+Begin
+  SixColorGame := SixPlayer;
+  FreeBoards;
+  HideAllColors(aOwner);
+  InitColors(aOwner);
+  If SixPlayer Then Begin
+    ShowAllColors(aOwner);
+  End;
+  MixColors;
+  AddEmptyBoard(aOwner, TemplateGroupBox, CirleDiameter);
+
 End;
 
 End.

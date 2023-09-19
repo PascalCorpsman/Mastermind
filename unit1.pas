@@ -75,11 +75,9 @@ Type
     { private declarations }
     fMasterMind: TMasterMind;
 
-    Procedure ShowAllColors; // Zeigt alle Vorschlagsfarben an
-    Procedure HideAllColors; // Versteckt alle Vorschlagsfarben
-
     Procedure OnBoard0ShapeMouseUp(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer); // Callback zum entfernen einer Farbe aus Board[0]
+    Procedure ResetLCLForNewGame;
 
   public
     { public declarations }
@@ -94,15 +92,6 @@ Implementation
 
 { TForm1 }
 
-Procedure TForm1.HideAllColors;
-Var
-  i: Integer;
-Begin
-  For i := 1 To 6 Do Begin
-    TShape(FindComponent('Shape' + inttostr(i))).visible := false;
-  End;
-End;
-
 Procedure TForm1.OnBoard0ShapeMouseUp(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
 Begin
@@ -110,41 +99,25 @@ Begin
   sender.free;
 End;
 
-Procedure TForm1.ShowAllColors;
-Var
-  i: Integer; // Zeigen aber wieder alle an, so das der User nicht weiß welche beiden wir nicht nutzen
+Procedure TForm1.ResetLCLForNewGame;
 Begin
-  For i := 1 To 6 Do Begin
-    TShape(FindComponent('Shape' + inttostr(i))).visible := true;
-  End;
+  button3.enabled := true; // Check Freischalten
+  button5.enabled := false; // Hide unused sperren
+  button7.enabled := true; // Tipp Freischalten
 End;
 
 Procedure TForm1.Button1Click(Sender: TObject);
 Begin
   // Starte Spiel mit 4 Farben
-  fMasterMind.SixColorGame := false;
-  fMasterMind.FreeBoards;
-  HideAllColors;
-  fMasterMind.InitColors(self);
-  fMasterMind.MixColors;
-  fMasterMind.AddEmptyBoard(self, GroupBox1, Shape1.Width);
-  button3.enabled := true; // Check Freischalten
-  button5.enabled := false; // Hide unused sperren
-  button7.enabled := true; // Tipp Freischalten
+  fMasterMind.StartNewGame(false, self, GroupBox1, Shape1.Width);
+  ResetLCLForNewGame;
 End;
 
 Procedure TForm1.Button2Click(Sender: TObject);
 Begin
   // Starte Spiel mit 6 Farben
-  fMasterMind.SixColorGame := true;
-  fMasterMind.FreeBoards;
-  fMasterMind.InitColors(self);
-  ShowAllColors;
-  fMasterMind.MixColors;
-  fMasterMind.AddEmptyBoard(self, GroupBox1, Shape1.Width);
-  button3.enabled := true; // Check Freischalten
-  button5.enabled := false; // Hide unused sperren
-  button7.enabled := true; // Tipp Freischalten
+  fMasterMind.StartNewGame(true, self, GroupBox1, Shape1.Width);
+  ResetLCLForNewGame;
 End;
 
 Procedure TForm1.Button3Click(Sender: TObject);
