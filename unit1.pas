@@ -152,6 +152,7 @@ Var
   s: TShape;
   b: Boolean;
 Begin
+  // hide unused
   // Löschen der nicht genutzten Farben aus den "Vorschlägen"
   For j := 1 To 6 Do Begin
     s := FindComponent('Shape' + inttostr(j)) As TShape;
@@ -249,45 +250,10 @@ End;
 Procedure TForm1.Shape1MouseUp(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
 Var
-  s, t: TShape;
-  l, i, j: Integer;
-  b: Boolean;
+  s: Tshape;
 Begin
-  (*
-   * Fügt eine neue Farbe in die Potenzielle Lösung hinzu
-   *)
-  If assigned(fMasterMind.Boards) And (fMasterMind.boards[0].ComponentCount < length(fMasterMind.ColorsToGuess)) Then Begin
-    s := sender As TShape;
-    // Prüfen obs die Farbe schon gibt..
-    For i := 0 To fMasterMind.Boards[0].ComponentCount - 1 Do Begin
-      t := fMasterMind.Boards[0].Components[i] As TShape;
-      If t.Brush.Color = s.brush.Color Then exit;
-    End;
-    // Wir erstellen ein neues Element, aber an welcher Position ?
-    t := TShape.Create(fMasterMind.boards[0]);
-    t.Parent := fMasterMind.boards[0];
-    t.Shape := stCircle;
-    t.Brush.Color := s.brush.Color;
-    t.Top := 3;
-    t.Width := s.Width;
-    t.Height := s.Height;
-    t.OnMouseUp := @OnBoard0ShapeMouseUp;
-    // Suchen der 1. Freien Position
-    For i := 0 To fMasterMind.boards[0].ComponentCount - 1 Do Begin
-      l := 10 + i * (s.Width + 10);
-      b := true;
-      For j := 0 To fMasterMind.boards[0].ComponentCount - 2 Do Begin
-        If l = (fMasterMind.boards[0].Components[j] As TShape).left Then Begin
-          b := false;
-          break;
-        End;
-      End;
-      If b Then Begin
-        t.left := l;
-        break;
-      End;
-    End;
-  End;
+  s := sender As TShape;
+  fMasterMind.AddColorToActualSolution(s.brush.Color, s.Width, @OnBoard0ShapeMouseUp);
 End;
 
 End.
