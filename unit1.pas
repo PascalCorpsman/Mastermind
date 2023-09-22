@@ -79,6 +79,7 @@ Type
       Shift: TShiftState; X, Y: Integer); // Callback zum entfernen einer Farbe aus Board[0]
     Procedure ResetLCLForNewGame;
 
+    Procedure HideUnusedColorsInAvailables();
   public
     { public declarations }
   End;
@@ -104,6 +105,26 @@ Begin
   button3.enabled := true; // Check Freischalten
   button5.enabled := false; // Hide unused sperren
   button7.enabled := true; // Tipp Freischalten
+End;
+
+Procedure TForm1.HideUnusedColorsInAvailables();
+Var
+  j, k: integer;
+  s: TShape;
+  b: Boolean;
+Begin
+  // Verstecken der nicht genutzten Farben aus den "Vorschlägen"
+  For j := 1 To 6 Do Begin
+    s := FindComponent('Shape' + inttostr(j)) As TShape;
+    b := false;
+    For k := 0 To high(fMasterMind.ColorsToGuess) Do Begin
+      If s.Brush.Color = fMasterMind.ColorsToGuess[k].Brush.Color Then Begin
+        b := true;
+        break;
+      End;
+    End;
+    s.Visible := b;
+  End;
 End;
 
 Procedure TForm1.Button1Click(Sender: TObject);
@@ -147,41 +168,10 @@ Begin
 End;
 
 Procedure TForm1.Button5Click(Sender: TObject);
-Var
-  i, j, k: integer;
-  s: TShape;
-  b: Boolean;
 Begin
-  // hide unused
-  // Löschen der nicht genutzten Farben aus den "Vorschlägen"
-  For j := 1 To 6 Do Begin
-    s := FindComponent('Shape' + inttostr(j)) As TShape;
-    b := false;
-    For k := 0 To high(fMasterMind.ColorsToGuess) Do Begin
-      If s.Brush.Color = fMasterMind.ColorsToGuess[k].Brush.Color Then Begin
-        b := true;
-        break;
-      End;
-    End;
-    s.Visible := b;
-  End;
-
-  // Löschen der nicht genutzten Farben aus allen "Lösungen"
-  For i := 1 To high(fMasterMind.Boards) Do Begin
-    For j := 0 To fMasterMind.Boards[i].ComponentCount - 1 Do Begin
-      If fMasterMind.Boards[i].Components[j] Is TShape Then Begin
-        s := fMasterMind.Boards[i].Components[j] As TShape;
-        b := false;
-        For k := 0 To high(fMasterMind.ColorsToGuess) Do Begin
-          If s.Brush.Color = fMasterMind.ColorsToGuess[k].Brush.Color Then Begin
-            b := true;
-            break;
-          End;
-        End;
-        s.Visible := b;
-      End;
-    End;
-  End;
+  // Hide unused
+  HideUnusedColorsInAvailables();
+  fMasterMind.HideUnusedColorsInBoards();
   Button5.enabled := false;
 End;
 

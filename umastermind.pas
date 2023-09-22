@@ -50,6 +50,7 @@ Type
     Procedure StartNewGame(SixPlayer: Boolean; aOwner: TWinControl;
       Const TemplateGroupBox: TGroupBox; CirleDiameter: integer);
     Procedure AddColorToActualSolution(aColor: TColor; CirleDiameter: integer; OnMouseUpCallback: TMouseEvent);
+    Procedure HideUnusedColorsInBoards();
   End;
 
 Operator = (a, b: tGuess): Boolean;
@@ -388,7 +389,8 @@ Begin
   AddEmptyBoard(aOwner, TemplateGroupBox, CirleDiameter);
 End;
 
-Procedure TMasterMind.AddColorToActualSolution(aColor: TColor; CirleDiameter: integer; OnMouseUpCallback: TMouseEvent);
+Procedure TMasterMind.AddColorToActualSolution(aColor: TColor;
+  CirleDiameter: integer; OnMouseUpCallback: TMouseEvent);
 Var
   t: TShape;
   l, i, j: Integer;
@@ -429,7 +431,30 @@ Begin
       End;
     End;
   End;
+End;
 
+Procedure TMasterMind.HideUnusedColorsInBoards();
+Var
+  i, j, k: integer;
+  s: TShape;
+  b: Boolean;
+Begin
+  // Löschen der nicht genutzten Farben aus allen "Lösungen"
+  For i := 1 To high(Boards) Do Begin
+    For j := 0 To Boards[i].ComponentCount - 1 Do Begin
+      If Boards[i].Components[j] Is TShape Then Begin
+        s := Boards[i].Components[j] As TShape;
+        b := false;
+        For k := 0 To high(ColorsToGuess) Do Begin
+          If s.Brush.Color = ColorsToGuess[k].Brush.Color Then Begin
+            b := true;
+            break;
+          End;
+        End;
+        s.Visible := b;
+      End;
+    End;
+  End;
 End;
 
 End.
