@@ -25,6 +25,11 @@
 (* History     : 0.01 - Initial version                                       *)
 (*                                                                            *)
 (******************************************************************************)
+(*
+ * Refactoring history:
+ *   1. Extract everything into umastermind.pas
+ *   2. Move Back all LCL related stuff to unit1 -> Prepare decoupling LCL and TMastermind
+ *)
 
 Unit Unit1;
 
@@ -79,6 +84,9 @@ Type
       Shift: TShiftState; X, Y: Integer); // Callback zum entfernen einer Farbe aus Board[0]
     Procedure ResetLCLForNewGame;
 
+    Procedure HideAllColors(); // Versteckt alle Vorschlagsfarben
+    Procedure ShowAllColors(); // Zeigt alle Vorschlagsfarben an
+
     Procedure HideUnusedColorsInAvailables();
   public
     { public declarations }
@@ -107,7 +115,25 @@ Begin
   button7.enabled := true; // Tipp Freischalten
 End;
 
-Procedure TForm1.HideUnusedColorsInAvailables();
+Procedure TForm1.HideAllColors();
+Var
+  i: Integer;
+Begin
+  For i := 1 To 6 Do Begin
+    TShape(FindComponent('Shape' + inttostr(i))).visible := false;
+  End;
+End;
+
+Procedure TForm1.ShowAllColors();
+Var
+  i: Integer; // Zeigen aber wieder alle an, so das der User nicht weiß welche beiden wir nicht nutzen
+Begin
+  For i := 1 To 6 Do Begin
+    TShape(FindComponent('Shape' + inttostr(i))).visible := true;
+  End;
+End;
+
+Procedure TForm1.HideUnusedColorsInAvailables;
 Var
   j, k: integer;
   s: TShape;
@@ -130,6 +156,7 @@ End;
 Procedure TForm1.Button1Click(Sender: TObject);
 Begin
   // Starte Spiel mit 4 Farben
+  HideAllColors();
   fMasterMind.StartNewGame(false, self, GroupBox1, Shape1.Width);
   ResetLCLForNewGame;
 End;
@@ -138,6 +165,7 @@ Procedure TForm1.Button2Click(Sender: TObject);
 Begin
   // Starte Spiel mit 6 Farben
   fMasterMind.StartNewGame(true, self, GroupBox1, Shape1.Width);
+  ShowAllColors;
   ResetLCLForNewGame;
 End;
 
@@ -230,9 +258,9 @@ Begin
   caption := 'Mastermind ver 0.01 by Corpsman | www.Corpsman.de |';
   Randomize;
   fMasterMind := TMasterMind.Create();
-  button3.enabled := false;
-  button5.enabled := false;
-  button7.enabled := false;
+  button3.enabled := false; // Check Freischalten
+  button5.enabled := false; // Hide unused sperren
+  button7.enabled := false; // Tipp Freischalten
   Constraints.MinHeight := Height;
   Constraints.MinWidth := Width;
 End;

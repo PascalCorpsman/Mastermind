@@ -33,6 +33,7 @@ Type
     SixColorGame: Boolean; // True, wenn mit 6 Farben zur Auswahl gespielt wird.
     ColorsToGuess: TGuess; // Die zu eratenden Farben
     Boards: Array Of TGroupBox; // Die bisherigen Rateversuche
+
     Constructor Create(); virtual;
     Destructor Destroy(); override;
 
@@ -44,8 +45,6 @@ Type
     Procedure InitColors(Const aOwner: TWinControl); // Initialisiert Colors und macht nur diejenigen Vorschlagsfarben sichtbar, welche verwendet wurden
     Function CreateBoardEvaluationAndEval(CirleDiameter: integer; Const HideUnusedButton: TButton): Boolean; // Erzeugt das Auswertungsbildchen in Board[0], true, wenn die Lösung gefunden wurde
     Procedure CreateTipp(aOwner: TWinControl);
-    Procedure HideAllColors(aOwner: TWinControl); // Versteckt alle Vorschlagsfarben
-    Procedure ShowAllColors(aOwner: TWinControl); // Zeigt alle Vorschlagsfarben an
 
     Procedure StartNewGame(SixPlayer: Boolean; aOwner: TWinControl;
       Const TemplateGroupBox: TGroupBox; CirleDiameter: integer);
@@ -357,34 +356,12 @@ Begin
   End;
 End;
 
-Procedure TMasterMind.HideAllColors(aOwner: TWinControl);
-Var
-  i: Integer;
-Begin
-  For i := 1 To 6 Do Begin
-    TShape(aOwner.FindComponent('Shape' + inttostr(i))).visible := false;
-  End;
-End;
-
-Procedure TMasterMind.ShowAllColors(aOwner: TWinControl);
-Var
-  i: Integer; // Zeigen aber wieder alle an, so das der User nicht weiß welche beiden wir nicht nutzen
-Begin
-  For i := 1 To 6 Do Begin
-    TShape(aOwner.FindComponent('Shape' + inttostr(i))).visible := true;
-  End;
-End;
-
 Procedure TMasterMind.StartNewGame(SixPlayer: Boolean; aOwner: TWinControl;
   Const TemplateGroupBox: TGroupBox; CirleDiameter: integer);
 Begin
   SixColorGame := SixPlayer;
   FreeBoards;
-  HideAllColors(aOwner);
   InitColors(aOwner);
-  If SixPlayer Then Begin
-    ShowAllColors(aOwner);
-  End;
   MixColors;
   AddEmptyBoard(aOwner, TemplateGroupBox, CirleDiameter);
 End;
@@ -414,7 +391,6 @@ Begin
     t.Width := CirleDiameter;
     t.Height := CirleDiameter;
     t.OnMouseUp := OnMouseUpCallback;
-    ;
     // Suchen der 1. Freien Position
     For i := 0 To boards[0].ComponentCount - 1 Do Begin
       l := 10 + i * (CirleDiameter + 10);
