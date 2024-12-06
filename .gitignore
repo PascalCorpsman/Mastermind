@@ -1,3 +1,4 @@
 backup/
 src/*.lps
+src/*.res
 lib/
