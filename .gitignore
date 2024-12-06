@@ -1,4 +1,5 @@
-backup/
+**/UniqueInstance/
+**/backup/
+**/lib/
 src/*.lps
 src/*.res
-lib/
