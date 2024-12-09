@@ -12,304 +12,274 @@
 (*               source file of the project.                                  *)
 (*                                                                            *)
 (******************************************************************************)
-unit umastermind;
+Unit umastermind;
 
 {$MODE ObjFPC}{$H+}
 
-interface
+Interface
 
-uses
-  Classes, SysUtils, ExtCtrls, StdCtrls, Controls, Graphics;
+Uses
+  Classes, SysUtils, ExtCtrls, StdCtrls, controls, Graphics;
 
-type
+Type
 
-  tGuess = array[0..3] of TShape;
+  tGuess = Array[0..3] Of TShape;
 
   { TMasterMind }
 
-  TMasterMind = class
+  TMasterMind = Class
   private
   public
-    SixColorGame: boolean; // True, wenn mit 6 Farben zur Auswahl gespielt wird.
+    SixColorGame: Boolean; // True, wenn mit 6 Farben zur Auswahl gespielt wird.
     ColorsToGuess: TGuess; // Die zu eratenden Farben
-    Boards: array of TGroupBox; // Die bisherigen Rateversuche
+    Boards: Array Of TGroupBox; // Die bisherigen Rateversuche
 
-    constructor Create(); virtual;
-    destructor Destroy(); override;
+    Constructor Create(); virtual;
+    Destructor Destroy(); override;
 
-    procedure FreeBoards; // Gibt alle Boards Frei
-    procedure MixColors; // Mischt Colors
-    function BoardToGuess(Index: integer): TGuess;
-    procedure AddEmptyBoard(const aOwner: TWinControl;
-      const TemplateGroupBox: TGroupBox; CirleDiameter: integer);
-    // Schiebt alle Boards um eins nach unten und erstellt ein neues leeres
-    procedure InitColors(const aOwner: TWinControl);
-    // Initialisiert Colors und macht nur diejenigen Vorschlagsfarben sichtbar, welche verwendet wurden
-    function CreateBoardEvaluationAndEval(CirleDiameter: integer;
-      const HideUnusedButton: TButton): boolean;
-    // Erzeugt das Auswertungsbildchen in Board[0], true, wenn die Lösung gefunden wurde
-    procedure CreateTipp(aOwner: TWinControl);
+    Procedure FreeBoards; // Gibt alle Boards Frei
+    Procedure MixColors; // Mischt Colors
+    Function BoardToGuess(Index: integer): TGuess;
+    Procedure AddEmptyBoard(Const aOwner: TWinControl;
+      Const TemplateGroupBox: TGroupBox; CirleDiameter: integer); // Schiebt alle Boards um eins nach unten und erstellt ein neues leeres
+    Procedure InitColors(Const aOwner: TWinControl); // Initialisiert Colors und macht nur diejenigen Vorschlagsfarben sichtbar, welche verwendet wurden
+    Function CreateBoardEvaluationAndEval(CirleDiameter: integer; Const HideUnusedButton: TButton): Boolean; // Erzeugt das Auswertungsbildchen in Board[0], true, wenn die Lösung gefunden wurde
+    Procedure CreateTipp(aOwner: TWinControl);
 
-    procedure StartNewGame(SixPlayer: boolean; aOwner: TWinControl;
-      const TemplateGroupBox: TGroupBox; CirleDiameter: integer);
-    procedure AddColorToActualSolution(aColor: TColor; CirleDiameter: integer;
-      OnMouseUpCallback: TMouseEvent);
-    procedure HideUnusedColorsInBoards();
-  end;
+    Procedure StartNewGame(SixPlayer: Boolean; aOwner: TWinControl;
+      Const TemplateGroupBox: TGroupBox; CirleDiameter: integer);
+    Procedure AddColorToActualSolution(aColor: TColor; CirleDiameter: integer; OnMouseUpCallback: TMouseEvent);
+    Procedure HideUnusedColorsInBoards();
+  End;
 
-operator =(a, b: tGuess): boolean;
+Operator = (a, b: tGuess): Boolean;
 
 (*
  * Vergleicht ColorGuess und ColortMatch und gibt die "Übereinstimmungen"
  * als Ergebniss eines "-ws" strings zurück.
  *)
-function GetMatchString(const ColorGuess, ColorMatch: TGuess): string;
+Function GetMatchString(Const ColorGuess, ColorMatch: TGuess): String;
 
-implementation
+Implementation
 
-operator =(a, b: tGuess): boolean;
-begin
-  Result :=
-    (a[0].Brush.Color = b[0].Brush.Color) and (a[1].Brush.Color =
-    b[1].Brush.Color) and (a[2].Brush.Color = b[2].Brush.Color) and
+Operator = (a, b: tGuess): Boolean;
+Begin
+  result :=
+    (a[0].Brush.Color = b[0].Brush.Color) And
+    (a[1].Brush.Color = b[1].Brush.Color) And
+    (a[2].Brush.Color = b[2].Brush.Color) And
     (a[3].Brush.Color = b[3].Brush.Color);
-end;
+End;
 
-function GetMatchString(const ColorGuess, ColorMatch: TGuess): string;
-
-  function cmp(a, b: char): integer;
-  const
+Function GetMatchString(Const ColorGuess, ColorMatch: TGuess): String;
+  Function cmp(a, b: Char): integer;
+  Const
     gew = '-ws';
-  var
+  Var
     p1, p2: integer;
-  begin
+  Begin
     p1 := pos(a, gew);
     p2 := pos(b, gew);
-    Result := p2 - p1;
-  end;
+    result := p2 - p1;
+  End;
+Var
+  bs: Array[0..3] Of Char;
+  i, j: Integer;
+  t: Char;
 
-var
-  bs: array[0..3] of char;
-  i, j: integer;
-  t: char;
-begin
+Begin
   (*
    * - = Kein Match
    * w = Richtige Farbe aber Falsche Position
    * s = Richtige Farbe auf Richtiger Position
    *)
-  for i := 0 to 3 do
-  begin
+  For i := 0 To 3 Do Begin
     bs[i] := '-';
-    for j := 0 to 3 do
-    begin
-      if ColorGuess[i].Brush.Color = ColorMatch[j].Brush.Color then
-      begin
-        if i = j then
-        begin
+    For j := 0 To 3 Do Begin
+      If ColorGuess[i].Brush.Color = ColorMatch[j].Brush.Color Then Begin
+        If i = j Then Begin
           bs[i] := 's';
-        end
-        else
-        begin
+        End
+        Else Begin
           bs[i] := 'w';
-        end;
-      end;
-    end;
-  end;
+        End;
+      End;
+    End;
+  End;
   // Die Antwort ist Ermittelt nun wird sie Sortiert, weils besser aussieht, und weil es die zwischenergebnisse Verschleiert
-  for i := 3 downto 1 do
-  begin
-    for j := 1 to i do
-    begin
-      if cmp(bs[j], bs[j - 1]) > 0 then
-      begin
+  For i := 3 Downto 1 Do Begin
+    For j := 1 To i Do Begin
+      If cmp(bs[j], bs[j - 1]) > 0 Then Begin
         t := bs[j - 1];
         bs[j - 1] := bs[j];
         bs[j] := t;
-      end;
-    end;
-  end;
-  Result := bs[0] + bs[1] + bs[2] + bs[3];
-end;
+      End;
+    End;
+  End;
+  result := bs[0] + bs[1] + bs[2] + bs[3];
+End;
 
 { TMasterMind }
 
-constructor TMasterMind.Create;
-begin
-  inherited Create;
-  SixColorGame := False;
-  Boards := nil;
-end;
+Constructor TMasterMind.Create;
+Begin
+  Inherited create;
+  SixColorGame := false;
+  Boards := Nil;
+End;
 
-destructor TMasterMind.Destroy;
-begin
+Destructor TMasterMind.Destroy;
+Begin
   // Nothing todo ?
-end;
+End;
 
-procedure TMasterMind.FreeBoards;
-var
-  i: integer;
-begin
-  for i := 0 to high(Boards) do
-  begin
-    Boards[i].Free;
-  end;
+Procedure TMasterMind.FreeBoards;
+Var
+  i: Integer;
+Begin
+  For i := 0 To high(Boards) Do Begin
+    Boards[i].free;
+  End;
   setlength(boards, 0);
-end;
+End;
 
-procedure TMasterMind.MixColors;
-var
+Procedure TMasterMind.MixColors;
+Var
   i, j, k: integer;
   tmp: TShape;
-begin
-  for i := 0 to 100 do
-  begin
+Begin
+  For i := 0 To 100 Do Begin
     j := random(length(ColorsToGuess));
     k := random(length(ColorsToGuess));
-    if j <> k then
-    begin
+    If j <> k Then Begin
       tmp := ColorsToGuess[j];
       ColorsToGuess[j] := ColorsToGuess[k];
       ColorsToGuess[k] := tmp;
-    end;
-  end;
-end;
+    End;
+  End;
+End;
 
-function TMasterMind.BoardToGuess(Index: integer): TGuess;
-begin
-  Result[0] := Boards[Index].Components[0] as TShape;
-  Result[1] := Boards[Index].Components[1] as TShape;
-  Result[2] := Boards[Index].Components[2] as TShape;
-  Result[3] := Boards[Index].Components[3] as TShape;
-end;
+Function TMasterMind.BoardToGuess(Index: integer): TGuess;
+Begin
+  result[0] := Boards[Index].Components[0] As TShape;
+  result[1] := Boards[Index].Components[1] As TShape;
+  result[2] := Boards[Index].Components[2] As TShape;
+  result[3] := Boards[Index].Components[3] As TShape;
+End;
 
-procedure TMasterMind.AddEmptyBoard(const aOwner: TWinControl;
-  const TemplateGroupBox: TGroupBox; CirleDiameter: integer);
-var
+Procedure TMasterMind.AddEmptyBoard(Const aOwner: TWinControl;
+  Const TemplateGroupBox: TGroupBox; CirleDiameter: integer);
+Var
   i, j: integer;
   s: TShape;
-begin
+Begin
   setlength(Boards, high(Boards) + 2); // + 1 Board
   // Shift alle Boards eins nach hinten
-  for i := high(Boards) downto 1 do
-  begin
+  For i := high(Boards) Downto 1 Do Begin
     boards[i] := Boards[i - 1];
-  end;
+  End;
   // Neues Board initialisieren
   boards[0] := TGroupBox.Create(aOwner);
   boards[0].Parent := aOwner;
   boards[0].Left := TemplateGroupBox.Left;
-  boards[0].Width := length(ColorsToGuess) * (CirleDiameter + 10) +
-    CirleDiameter + 20 { Bereich für die Lösung};
+  boards[0].Width := length(ColorsToGuess) * (CirleDiameter + 10) + CirleDiameter + 20 { Bereich für die Lösung};
   boards[0].Height := TemplateGroupBox.Height;
-  boards[0].Name := 'Guessboard' + IntToStr(length(Boards));
-  boards[0].Caption := ' Guessboard ' + IntToStr(length(Boards)) + ' ';
-  for i := 0 to high(Boards) do
-  begin
+  boards[0].Name := 'Guessboard' + inttostr(length(Boards));
+  boards[0].Caption := ' Guessboard ' + inttostr(length(Boards)) + ' ';
+  For i := 0 To high(Boards) Do Begin
     // Neu Berechnen der angezeigten Höhe der Boards
-    boards[i].Top := TemplateGroupBox.top + TemplateGroupBox.Height +
-      1 + (TemplateGroupBox.Height + 1) * i;
-    if i = 1 then
-    begin // Deaktivieren der "Lösch" routine innerhalb der bereits evaluierten Boards
-      for j := 0 to Boards[i].ComponentCount - 1 do
-      begin
-        if Boards[i].Components[j] is TShape then
-        begin
-          s := Boards[i].Components[j] as TShape;
-          s.OnMouseUp := nil;
-        end;
-      end;
-    end;
-  end;
-end;
+    boards[i].Top := TemplateGroupBox.top + TemplateGroupBox.Height + 1 + (TemplateGroupBox.Height + 1) * i;
+    If i = 1 Then Begin // Deaktivieren der "Lösch" routine innerhalb der bereits evaluierten Boards
+      For j := 0 To Boards[i].ComponentCount - 1 Do Begin
+        If Boards[i].Components[j] Is TShape Then Begin
+          s := Boards[i].Components[j] As TShape;
+          s.OnMouseUp := Nil;
+        End;
+      End;
+    End;
+  End;
+End;
 
-procedure TMasterMind.InitColors(const aOwner: TWinControl);
-var
-  k, j, i: integer;
+Procedure TMasterMind.InitColors(Const aOwner: TWinControl);
+Var
+  k, j, i: Integer;
   b: boolean;
   s: TShape;
-begin
-  for i := 0 to high(ColorsToGuess) do
-  begin
-    ColorsToGuess[i] := nil;
-    b := True;
-    while b do
-    begin
+Begin
+  For i := 0 To high(ColorsToGuess) Do Begin
+    ColorsToGuess[i] := Nil;
+    b := true;
+    While b Do Begin
       j := random(6) + 1;
-      s := TShape(aOwner.FindComponent('Shape' + IntToStr(j)));
-      b := False;
-      for k := 0 to i - 1 do
-      begin
-        if ColorsToGuess[k] = s then
-        begin
-          b := True;
+      s := TShape(aOwner.FindComponent('Shape' + inttostr(j)));
+      b := false;
+      For k := 0 To i - 1 Do Begin
+        If ColorsToGuess[k] = s Then Begin
+          b := true;
           break;
-        end;
-      end;
-      if not b then
-      begin
+        End;
+      End;
+      If Not b Then Begin
         ColorsToGuess[i] := s;
-        s.Visible := True;
-      end;
-    end;
-  end;
-end;
+        s.Visible := true;
+      End;
+    End;
+  End;
+End;
 
-function TMasterMind.CreateBoardEvaluationAndEval(CirleDiameter: integer;
-  const HideUnusedButton: TButton): boolean;
-var
+Function TMasterMind.CreateBoardEvaluationAndEval(CirleDiameter: integer;
+  Const HideUnusedButton: TButton): Boolean;
+Var
   x, y, i: integer;
   b: Tbitmap;
   im: TImage;
-  s: string;
+  s: String;
   g: tGuess;
-begin
-  g[0] := Boards[0].Components[0] as TShape;
-  g[1] := Boards[0].Components[1] as TShape;
-  g[2] := Boards[0].Components[2] as TShape;
-  g[3] := Boards[0].Components[3] as TShape;
+Begin
+  g[0] := Boards[0].Components[0] As TShape;
+  g[1] := Boards[0].Components[1] As TShape;
+  g[2] := Boards[0].Components[2] As TShape;
+  g[3] := Boards[0].Components[3] As TShape;
   s := GetMatchString(g, ColorsToGuess);
   // Visualisieren
   b := TBitmap.Create;
   b.Width := CirleDiameter;
   b.Height := CirleDiameter;
-  for i := 0 to 3 do
-  begin
-    case s[i + 1] of
+  For i := 0 To 3 Do Begin
+    Case s[i + 1] Of
       '-': b.Canvas.Brush.Color := clGray;
       'w': b.Canvas.Brush.Color := clwhite;
       's': b.Canvas.Brush.Color := clBlack;
-    end;
-    x := i mod 2;
-    y := i div 2;
-    x := x * (CirleDiameter div 2);
-    y := y * (CirleDiameter div 2);
-    b.canvas.Rectangle(x, y, x + (CirleDiameter div 2) + 1, y +
-      (CirleDiameter div 2) + 1);
-  end;
+    End;
+    x := i Mod 2;
+    y := i Div 2;
+    x := x * (CirleDiameter Div 2);
+    y := y * (CirleDiameter Div 2);
+    b.canvas.Rectangle(x, y, x + (CirleDiameter Div 2) + 1, y + (CirleDiameter Div 2) + 1);
+  End;
   im := TImage.Create(Boards[0]);
   im.Parent := Boards[0];
   im.top := 3;
   im.left := 4 * (CirleDiameter + 10) + 5;
-  im.AutoSize := False;
+  im.AutoSize := false;
   im.Width := CirleDiameter;
   im.Height := CirleDiameter;
-  im.Center := True;
+  im.Center := true;
   im.Picture.Assign(b);
-  b.Free;
-  if (s[1] <> '-') and (SixColorGame) then HideUnusedButton.Enabled := True;
-  Result := (s[1] = 's') and (s[2] = 's') and (s[3] = 's') and (s[4] = 's');
-end;
+  b.free;
+  If (s[1] <> '-') And (SixColorGame) Then HideUnusedButton.Enabled := true;
+  result := (s[1] = 's') And (s[2] = 's') And (s[3] = 's') And (s[4] = 's');
+End;
 
-procedure TMasterMind.CreateTipp(aOwner: TWinControl);
-var
-  AviableColors: array of TShape;
+Procedure TMasterMind.CreateTipp(aOwner: TWinControl);
+Var
+  AviableColors: Array Of TShape;
   s: TShape; // Zwischenspeicher, für den leichteren Zugriff
-  i: integer;
-  KeepTrying: boolean;
-  Permutation: string;
+  i: Integer;
+  KeepTrying: Boolean;
+  Permutation: String;
   GuessFromGuessboard, NewGuess: TGuess;
-begin
+Begin
   (*
    * Die Idee hinter dem Algorithmus :
    * 1. Raten einer zufälligen Farbreihenfolge
@@ -326,49 +296,41 @@ begin
    * bereichert wird mit neuem Wissen und deswegen die Lösung näher rückt *g*.
    *)
   // 1. Bestimmen aller Möglichen Farbkombinationen
-  AviableColors := nil;
-  for i := 1 to 6 do
-  begin
-    s := (aOwner.FindComponent('Shape' + IntToStr(i))) as Tshape;
-    if s.Visible then
-    begin
+  AviableColors := Nil;
+  For i := 1 To 6 Do Begin
+    s := (aOwner.FindComponent('Shape' + inttostr(i))) As Tshape;
+    If s.Visible Then Begin
       setlength(AviableColors, high(AviableColors) + 2);
       AviableColors[high(AviableColors)] := s;
-    end;
-  end;
-  if length(AviableColors) < 4 then
-  begin
-    raise Exception.Create('Logik fehler');
-  end;
+    End;
+  End;
+  If length(AviableColors) < 4 Then Begin
+    Raise exception.create('Logik fehler');
+  End;
   // 2. bestimmen einer Poteniellen lösung
-  KeepTrying := True;
-  while KeepTrying do
-  begin
+  KeepTrying := true;
+  While KeepTrying Do Begin
     // Bestimmen einer Zufälligen Permutation der indizees von AviableColors
     Permutation := '';
-    while length(Permutation) < 4 do
-    begin
+    While length(Permutation) < 4 Do Begin
       i := random(length(AviableColors));
-      if pos(IntToStr(i), Permutation) = 0 then
-      begin
-        Permutation := Permutation + IntToStr(i);
-      end;
-    end;
+      If pos(inttostr(i), Permutation) = 0 Then Begin
+        Permutation := Permutation + inttostr(i);
+      End;
+    End;
     // Umwandeln der Permutation in eine TGuess
-    NewGuess[0] := AviableColors[StrToInt(Permutation[1])];
-    NewGuess[1] := AviableColors[StrToInt(Permutation[2])];
-    NewGuess[2] := AviableColors[StrToInt(Permutation[3])];
-    NewGuess[3] := AviableColors[StrToInt(Permutation[4])];
-    KeepTrying := False; // Annemen dass wir eine neue passende Permutation gefunden haben
-    for i := 1 to high(Boards) do
-    begin
+    NewGuess[0] := AviableColors[strtoint(Permutation[1])];
+    NewGuess[1] := AviableColors[strtoint(Permutation[2])];
+    NewGuess[2] := AviableColors[strtoint(Permutation[3])];
+    NewGuess[3] := AviableColors[strtoint(Permutation[4])];
+    KeepTrying := false; // Annemen dass wir eine neue passende Permutation gefunden haben
+    For i := 1 To high(Boards) Do Begin
       // 2.1 Der neue Vorschlag muss unterschiedlich zu allen bisher gefundenen sein
       GuessFromGuessboard := BoardToGuess(i);
-      if NewGuess = GuessFromGuessboard then
-      begin
-        KeepTrying := True;
+      If NewGuess = GuessFromGuessboard Then Begin
+        KeepTrying := true;
         break;
-      end;
+      End;
       // 2.2 Prüfen ob der neue Vorschlag bei allen alten Ergebnissen das selbe Ergebnis erzeugt => also valide ist.
       (*
        * Hier wird auf die zu eratende Farbreihenfolge zurück gegriffen, weil
@@ -378,54 +340,48 @@ begin
        * Wollte man dies Ausbauen müsste im Eval Schritt jedes jeweilige Ergebnis
        * als Matchstring an die entdprechenden Boards angehängt werden.
        *)
-      if GetMatchString(GuessFromGuessboard, ColorsToGuess) <>
-        GetMatchString(GuessFromGuessboard, NewGuess) then
-      begin
-        KeepTrying := True;
+      If GetMatchString(GuessFromGuessboard, ColorsToGuess) <> GetMatchString(GuessFromGuessboard, NewGuess) Then Begin
+        KeepTrying := true;
         break;
-      end;
-    end;
-  end;
+      End;
+    End;
+  End;
   // 3.1 Löschen der bisherigen Eingabe
-  for i := 0 to Boards[0].Componentcount - 1 do
-  begin
+  For i := 0 To Boards[0].Componentcount - 1 Do Begin
     Boards[0].Components[0].Free;
-  end;
+  End;
   // 3.2 Setzen der gefundenen Lösung
-  for i := 0 to 3 do
-  begin
+  For i := 0 To 3 Do Begin
     NewGuess[i].OnMouseUp(NewGuess[i], mbLeft, [ssleft], 1, 1);
-  end;
-end;
+  End;
+End;
 
-procedure TMasterMind.StartNewGame(SixPlayer: boolean; aOwner: TWinControl;
-  const TemplateGroupBox: TGroupBox; CirleDiameter: integer);
-begin
+Procedure TMasterMind.StartNewGame(SixPlayer: Boolean; aOwner: TWinControl;
+  Const TemplateGroupBox: TGroupBox; CirleDiameter: integer);
+Begin
   SixColorGame := SixPlayer;
   FreeBoards;
   InitColors(aOwner);
   MixColors;
   AddEmptyBoard(aOwner, TemplateGroupBox, CirleDiameter);
-end;
+End;
 
-procedure TMasterMind.AddColorToActualSolution(aColor: TColor;
+Procedure TMasterMind.AddColorToActualSolution(aColor: TColor;
   CirleDiameter: integer; OnMouseUpCallback: TMouseEvent);
-var
+Var
   t: TShape;
-  l, i, j: integer;
-  b: boolean;
-begin
+  l, i, j: Integer;
+  b: Boolean;
+Begin
   (*
    * Fügt eine neue Farbe in die Potenzielle Lösung hinzu
    *)
-  if assigned(Boards) and (boards[0].ComponentCount < length(ColorsToGuess)) then
-  begin
+  If assigned(Boards) And (boards[0].ComponentCount < length(ColorsToGuess)) Then Begin
     // Prüfen obs die Farbe schon gibt..
-    for i := 0 to Boards[0].ComponentCount - 1 do
-    begin
-      t := Boards[0].Components[i] as TShape;
-      if t.Brush.Color = aColor then exit;
-    end;
+    For i := 0 To Boards[0].ComponentCount - 1 Do Begin
+      t := Boards[0].Components[i] As TShape;
+      If t.Brush.Color = aColor Then exit;
+    End;
     // Wir erstellen ein neues Element, aber an welcher Position ?
     t := TShape.Create(boards[0]);
     t.Parent := boards[0];
@@ -436,54 +392,45 @@ begin
     t.Height := CirleDiameter;
     t.OnMouseUp := OnMouseUpCallback;
     // Suchen der 1. Freien Position
-    for i := 0 to boards[0].ComponentCount - 1 do
-    begin
+    For i := 0 To boards[0].ComponentCount - 1 Do Begin
       l := 10 + i * (CirleDiameter + 10);
-      b := True;
-      for j := 0 to boards[0].ComponentCount - 2 do
-      begin
-        if l = (boards[0].Components[j] as TShape).left then
-        begin
-          b := False;
+      b := true;
+      For j := 0 To boards[0].ComponentCount - 2 Do Begin
+        If l = (boards[0].Components[j] As TShape).left Then Begin
+          b := false;
           break;
-        end;
-      end;
-      if b then
-      begin
+        End;
+      End;
+      If b Then Begin
         t.left := l;
         break;
-      end;
-    end;
-  end;
-end;
+      End;
+    End;
+  End;
+End;
 
-procedure TMasterMind.HideUnusedColorsInBoards();
-var
+Procedure TMasterMind.HideUnusedColorsInBoards();
+Var
   i, j, k: integer;
   s: TShape;
-  b: boolean;
-begin
+  b: Boolean;
+Begin
   // Löschen der nicht genutzten Farben aus allen "Lösungen"
-  for i := 1 to high(Boards) do
-  begin
-    for j := 0 to Boards[i].ComponentCount - 1 do
-    begin
-      if Boards[i].Components[j] is TShape then
-      begin
-        s := Boards[i].Components[j] as TShape;
-        b := False;
-        for k := 0 to high(ColorsToGuess) do
-        begin
-          if s.Brush.Color = ColorsToGuess[k].Brush.Color then
-          begin
-            b := True;
+  For i := 1 To high(Boards) Do Begin
+    For j := 0 To Boards[i].ComponentCount - 1 Do Begin
+      If Boards[i].Components[j] Is TShape Then Begin
+        s := Boards[i].Components[j] As TShape;
+        b := false;
+        For k := 0 To high(ColorsToGuess) Do Begin
+          If s.Brush.Color = ColorsToGuess[k].Brush.Color Then Begin
+            b := true;
             break;
-          end;
-        end;
+          End;
+        End;
         s.Visible := b;
-      end;
-    end;
-  end;
-end;
+      End;
+    End;
+  End;
+End;
 
-end.
+End.
