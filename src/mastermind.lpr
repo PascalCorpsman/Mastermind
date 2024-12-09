@@ -12,24 +12,24 @@
 (*               source file of the project.                                  *)
 (*                                                                            *)
 (******************************************************************************)
-Program mastermind;
+program mastermind;
 
 {$MODE objfpc}{$H+}
 
-Uses
-{$IFDEF UNIX}{$IFDEF UseCThreads}
+uses
+  {$IFDEF UNIX}{$IFDEF UseCThreads}
   cthreads,
 {$ENDIF}{$ENDIF}
   Interfaces, // this includes the LCL widgetset
-  Forms, Unit1, umastermind
-  { you can add units after this };
+  Forms,
+  Unit1,
+  umastermind { you can add units after this };
 
-{$R *.res}
+  {$R *.res}
 
-Begin
+begin
   RequireDerivedFormResource := True;
   Application.Initialize;
   Application.CreateForm(TForm1, Form1);
   Application.Run;
-End.
-
+end.

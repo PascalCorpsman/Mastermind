@@ -31,21 +31,21 @@
  *   2. Move Back all LCL related stuff to unit1 -> Prepare decoupling LCL and TMastermind
  *)
 
-Unit Unit1;
+unit Unit1;
 
 {$MODE objfpc}{$H+}
 
-Interface
+interface
 
-Uses
+uses
   Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs, StdCtrls,
   ExtCtrls, umastermind;
 
-Type
+type
 
   { TForm1 }
 
-  TForm1 = Class(TForm)
+  TForm1 = class(TForm)
     Button1: TButton;
     Button2: TButton;
     Button3: TButton;
@@ -63,216 +63,226 @@ Type
     Shape4: TShape;
     Shape5: TShape;
     Shape6: TShape;
-    Procedure Button1Click(Sender: TObject);
-    Procedure Button2Click(Sender: TObject);
-    Procedure Button3Click(Sender: TObject);
-    Procedure Button4Click(Sender: TObject);
-    Procedure Button5Click(Sender: TObject);
-    Procedure Button6Click(Sender: TObject);
-    Procedure Button7Click(Sender: TObject);
-    Procedure Button8Click(Sender: TObject);
-    Procedure Button9Click(Sender: TObject);
-    Procedure FormClose(Sender: TObject; Var CloseAction: TCloseAction);
-    Procedure FormCreate(Sender: TObject);
-    Procedure Shape1MouseUp(Sender: TObject; Button: TMouseButton;
-      Shift: TShiftState; X, Y: Integer);
+    procedure Button1Click(Sender: TObject);
+    procedure Button2Click(Sender: TObject);
+    procedure Button3Click(Sender: TObject);
+    procedure Button4Click(Sender: TObject);
+    procedure Button5Click(Sender: TObject);
+    procedure Button6Click(Sender: TObject);
+    procedure Button7Click(Sender: TObject);
+    procedure Button8Click(Sender: TObject);
+    procedure Button9Click(Sender: TObject);
+    procedure FormClose(Sender: TObject; var CloseAction: TCloseAction);
+    procedure FormCreate(Sender: TObject);
+    procedure Shape1MouseUp(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: integer);
   private
     { private declarations }
     fMasterMind: TMasterMind;
 
-    Procedure OnBoard0ShapeMouseUp(Sender: TObject; Button: TMouseButton;
-      Shift: TShiftState; X, Y: Integer); // Callback zum entfernen einer Farbe aus Board[0]
-    Procedure ResetLCLForNewGame;
+    procedure OnBoard0ShapeMouseUp(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: integer);
+    // Callback zum entfernen einer Farbe aus Board[0]
+    procedure ResetLCLForNewGame;
 
-    Procedure HideAllColors(); // Versteckt alle Vorschlagsfarben
-    Procedure ShowAllColors(); // Zeigt alle Vorschlagsfarben an
+    procedure HideAllColors(); // Versteckt alle Vorschlagsfarben
+    procedure ShowAllColors(); // Zeigt alle Vorschlagsfarben an
 
-    Procedure HideUnusedColorsInAvailables();
+    procedure HideUnusedColorsInAvailables();
   public
     { public declarations }
-  End;
+  end;
 
-Var
+var
   Form1: TForm1;
 
-Implementation
+implementation
 
 {$R *.lfm}
 
 { TForm1 }
 
-Procedure TForm1.OnBoard0ShapeMouseUp(Sender: TObject; Button: TMouseButton;
-  Shift: TShiftState; X, Y: Integer);
-Begin
+procedure TForm1.OnBoard0ShapeMouseUp(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: integer);
+begin
   // Entfernen des Aktuellen Elementes in Guess
-  sender.free;
-End;
+  Sender.Free;
+end;
 
-Procedure TForm1.ResetLCLForNewGame;
-Begin
-  button3.enabled := true; // Check Freischalten
-  button5.enabled := false; // Hide unused sperren
-  button7.enabled := true; // Tipp Freischalten
-End;
+procedure TForm1.ResetLCLForNewGame;
+begin
+  button3.Enabled := True; // Check Freischalten
+  button5.Enabled := False; // Hide unused sperren
+  button7.Enabled := True; // Tipp Freischalten
+end;
 
-Procedure TForm1.HideAllColors();
-Var
-  i: Integer;
-Begin
-  For i := 1 To 6 Do Begin
-    TShape(FindComponent('Shape' + inttostr(i))).visible := false;
-  End;
-End;
+procedure TForm1.HideAllColors();
+var
+  i: integer;
+begin
+  for i := 1 to 6 do
+  begin
+    TShape(FindComponent('Shape' + IntToStr(i))).Visible := False;
+  end;
+end;
 
-Procedure TForm1.ShowAllColors();
-Var
-  i: Integer; // Zeigen aber wieder alle an, so das der User nicht weiß welche beiden wir nicht nutzen
-Begin
-  For i := 1 To 6 Do Begin
-    TShape(FindComponent('Shape' + inttostr(i))).visible := true;
-  End;
-End;
+procedure TForm1.ShowAllColors();
+var
+  i: integer;
+  // Zeigen aber wieder alle an, so das der User nicht weiß welche beiden wir nicht nutzen
+begin
+  for i := 1 to 6 do
+  begin
+    TShape(FindComponent('Shape' + IntToStr(i))).Visible := True;
+  end;
+end;
 
-Procedure TForm1.HideUnusedColorsInAvailables;
-Var
+procedure TForm1.HideUnusedColorsInAvailables;
+var
   j, k: integer;
   s: TShape;
-  b: Boolean;
-Begin
+  b: boolean;
+begin
   // Verstecken der nicht genutzten Farben aus den "Vorschlägen"
-  For j := 1 To 6 Do Begin
-    s := FindComponent('Shape' + inttostr(j)) As TShape;
-    b := false;
-    For k := 0 To high(fMasterMind.ColorsToGuess) Do Begin
-      If s.Brush.Color = fMasterMind.ColorsToGuess[k].Brush.Color Then Begin
-        b := true;
+  for j := 1 to 6 do
+  begin
+    s := FindComponent('Shape' + IntToStr(j)) as TShape;
+    b := False;
+    for k := 0 to high(fMasterMind.ColorsToGuess) do
+    begin
+      if s.Brush.Color = fMasterMind.ColorsToGuess[k].Brush.Color then
+      begin
+        b := True;
         break;
-      End;
-    End;
+      end;
+    end;
     s.Visible := b;
-  End;
-End;
+  end;
+end;
 
-Procedure TForm1.Button1Click(Sender: TObject);
-Begin
+procedure TForm1.Button1Click(Sender: TObject);
+begin
   // Starte Spiel mit 4 Farben
   HideAllColors();
-  fMasterMind.StartNewGame(false, self, GroupBox1, Shape1.Width);
+  fMasterMind.StartNewGame(False, self, GroupBox1, Shape1.Width);
   ResetLCLForNewGame;
-End;
+end;
 
-Procedure TForm1.Button2Click(Sender: TObject);
-Begin
+procedure TForm1.Button2Click(Sender: TObject);
+begin
   // Starte Spiel mit 6 Farben
-  fMasterMind.StartNewGame(true, self, GroupBox1, Shape1.Width);
+  fMasterMind.StartNewGame(True, self, GroupBox1, Shape1.Width);
   ShowAllColors;
   ResetLCLForNewGame;
-End;
+end;
 
-Procedure TForm1.Button3Click(Sender: TObject);
-Begin
+procedure TForm1.Button3Click(Sender: TObject);
+begin
   // Checkt Board[0]
   // Check ob überhaupt genug farben gesetzt wurden ..
-  If (Not Assigned(fMasterMind.Boards)) Or (fMasterMind.Boards[0].ComponentCount <> Length(fMasterMind.ColorsToGuess)) Then exit;
-  If fMasterMind.CreateBoardEvaluationAndEval(Shape1.Width, Button5) Then Begin // Ist es gelöst ?
-    button3.enabled := false;
-    button7.enabled := false;
-    showmessage('You win with ' + inttostr(length(fMasterMind.Boards)) + ' tries.');
-  End
-  Else Begin
-    If Length(fMasterMind.Boards) = 10 Then Begin // Verliert der Spieler ?
-      button7.enabled := false;
-      showmessage('You loose.');
-    End
-    Else Begin
+  if (not Assigned(fMasterMind.Boards)) or
+    (fMasterMind.Boards[0].ComponentCount <> Length(fMasterMind.ColorsToGuess)) then exit;
+  if fMasterMind.CreateBoardEvaluationAndEval(Shape1.Width, Button5) then
+  begin // Ist es gelöst ?
+    button3.Enabled := False;
+    button7.Enabled := False;
+    ShowMessage('You win with ' + IntToStr(length(fMasterMind.Boards)) + ' tries.');
+  end
+  else
+  begin
+    if Length(fMasterMind.Boards) = 10 then
+    begin // Verliert der Spieler ?
+      button7.Enabled := False;
+      ShowMessage('You loose.');
+    end
+    else
+    begin
       fMasterMind.AddEmptyBoard(self, GroupBox1, Shape1.Width);
-    End;
-  End;
-End;
+    end;
+  end;
+end;
 
-Procedure TForm1.Button4Click(Sender: TObject);
-Begin
-  close;
-End;
+procedure TForm1.Button4Click(Sender: TObject);
+begin
+  Close;
+end;
 
-Procedure TForm1.Button5Click(Sender: TObject);
-Begin
+procedure TForm1.Button5Click(Sender: TObject);
+begin
   // Hide unused
   HideUnusedColorsInAvailables();
   fMasterMind.HideUnusedColorsInBoards();
-  Button5.enabled := false;
-End;
+  Button5.Enabled := False;
+end;
 
-Procedure TForm1.Button6Click(Sender: TObject);
-Begin
+procedure TForm1.Button6Click(Sender: TObject);
+begin
   // Hilfe
-  showmessage(
+  ShowMessage(
     Caption + LineEnding + LineEnding +
     'This is the Mastermind board game implementation' + LineEnding +
     'Play it like you would play the game with a partner.' + LineEnding +
-    'Gameplay:' + LineEnding +
-    '- Start game by choosing start with 4 or 6 colors.' + LineEnding +
-    '- Click on the available colors to fill with your' + LineEnding +
-    '  guess board.' + LineEnding +
+    'Gameplay:' + LineEnding + '- Start game by choosing start with 4 or 6 colors.' +
+    LineEnding + '- Click on the available colors to fill with your' +
+    LineEnding + '  guess board.' + LineEnding +
     '- Click on a color whithin your guess board to undo' + LineEnding +
-    '  your guessed color.' + LineEnding +
-    '- Press the check button for evaluation' + LineEnding + LineEnding +
-    'Colors:' + LineEnding +
-    '  Gray = no match' + LineEnding +
-    '  white = correct color but wrong position' + LineEnding +
-    '  black = correct color on correct position' + LineEnding +
-    'You win if you find the solution in less than 11' + LineEnding +
-    'steps.'
+    '  your guessed color.' + LineEnding + '- Press the check button for evaluation' +
+    LineEnding + LineEnding + 'Colors:' + LineEnding + '  Gray = no match' +
+    LineEnding + '  white = correct color but wrong position' +
+    LineEnding + '  black = correct color on correct position' +
+    LineEnding + 'You win if you find the solution in less than 11' +
+    LineEnding + 'steps.'
     );
-End;
+end;
 
-Procedure TForm1.Button7Click(Sender: TObject);
-Begin
+procedure TForm1.Button7Click(Sender: TObject);
+begin
   // Tipp
-  If Not button3.enabled Then exit; // Wenn wir nicht mehr die Möglichkeit zum "checken" haben brauchts auch keinen Tipp mehr.
-  If button5.enabled Then Begin // Wenn die Möglichkeit besteht Farben aus zu Grenzen, dann Weg damit
+  if not button3.Enabled then exit;
+  // Wenn wir nicht mehr die Möglichkeit zum "checken" haben brauchts auch keinen Tipp mehr.
+  if button5.Enabled then
+  begin // Wenn die Möglichkeit besteht Farben aus zu Grenzen, dann Weg damit
     button5.Click;
-  End;
+  end;
   fMasterMind.CreateTipp(self);
-End;
+end;
 
-Procedure TForm1.Button8Click(Sender: TObject);
-Begin
+procedure TForm1.Button8Click(Sender: TObject);
+begin
   // Load
-  showmessage('Todo');
-End;
+  ShowMessage('Todo');
+end;
 
-Procedure TForm1.Button9Click(Sender: TObject);
-Begin
+procedure TForm1.Button9Click(Sender: TObject);
+begin
   // Save, hart Codiert in einer .save Datei => Speichern als TFilestream, sonst ists zu leicht "hackbar"
-  showmessage('Todo');
-End;
+  ShowMessage('Todo');
+end;
 
-Procedure TForm1.FormClose(Sender: TObject; Var CloseAction: TCloseAction);
-Begin
+procedure TForm1.FormClose(Sender: TObject; var CloseAction: TCloseAction);
+begin
   fMasterMind.Free;
-End;
+end;
 
-Procedure TForm1.FormCreate(Sender: TObject);
-Begin
-  caption := 'Mastermind ver 0.01 by Corpsman | www.Corpsman.de |';
+procedure TForm1.FormCreate(Sender: TObject);
+begin
+  Caption := 'Mastermind ver 0.01 by Corpsman | www.Corpsman.de |';
   Randomize;
   fMasterMind := TMasterMind.Create();
-  button3.enabled := false; // Check Freischalten
-  button5.enabled := false; // Hide unused sperren
-  button7.enabled := false; // Tipp Freischalten
+  button3.Enabled := False; // Check Freischalten
+  button5.Enabled := False; // Hide unused sperren
+  button7.Enabled := False; // Tipp Freischalten
   Constraints.MinHeight := Height;
   Constraints.MinWidth := Width;
-End;
+end;
 
-Procedure TForm1.Shape1MouseUp(Sender: TObject; Button: TMouseButton;
-  Shift: TShiftState; X, Y: Integer);
-Var
+procedure TForm1.Shape1MouseUp(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: integer);
+var
   s: Tshape;
-Begin
-  s := sender As TShape;
+begin
+  s := Sender as TShape;
   fMasterMind.AddColorToActualSolution(s.brush.Color, s.Width, @OnBoard0ShapeMouseUp);
-End;
+end;
 
-End.
-
+end.
